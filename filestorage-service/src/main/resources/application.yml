@@ -1,0 +1,23 @@
+
+
+server:
+  port: 8082
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/documents
+  application:
+    name: DOCUMENT-SERVICE
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /files/v3/api-docs
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
