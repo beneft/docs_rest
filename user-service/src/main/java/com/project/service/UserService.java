@@ -12,12 +12,10 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final RestTemplate restTemplate;
 
     @Autowired
-    public UserService(UserRepository userRepository, RestTemplate restTemplate) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.restTemplate = restTemplate;
     }
 
     public User createUser(User user) {
@@ -33,14 +31,6 @@ public class UserService {
             user.setName(userDetails.getName());
             return userRepository.save(user);
         }).orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    public void addSignerToDocument(SignRequest request) {
-        restTemplate.postForEntity("http://DOCUMENT-SERVICE/files/signers", request, String.class);
-    }
-
-    public void signDocument(SignRequest request) {
-        restTemplate.postForEntity("http://DOCUMENT-SERVICE/files/sign", request, String.class);
     }
 }
 

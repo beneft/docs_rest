@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.context.annotation.Configuration;
 
 @OpenAPIDefinition(
-        info = @Info(title = "User Service API", version = "1.0", description = "CRUD and document signing")
+        info = @Info(title = "User Service API", version = "1.0", description = "CRUD")
 )
 @Configuration
 public class SwaggerConfig { }
