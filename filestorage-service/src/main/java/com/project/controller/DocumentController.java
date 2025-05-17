@@ -2,6 +2,7 @@ package com.project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.dto.FullDocumentDTO;
+import com.project.dto.UploadDocumentResponse;
 import com.project.model.DocumentMetadata;
 import com.project.service.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadDocument(
+    public ResponseEntity<UploadDocumentResponse> uploadDocument(
             @RequestPart("file") MultipartFile file,
             @RequestPart("metadata") String metadataJson) throws IOException {
 
@@ -30,12 +31,12 @@ public class DocumentController {
         DocumentMetadata metadata = objectMapper.readValue(metadataJson, DocumentMetadata.class);
 
         String id = documentService.uploadDocument(file, metadata);
-        return ResponseEntity.ok("Document uploaded with ID: " + id);
+        return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id) throws IOException {
+    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id) {
         return documentService.downloadDocument(id)
                 .map(resource -> {
                     try {
