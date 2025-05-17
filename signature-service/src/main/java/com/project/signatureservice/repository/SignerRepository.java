@@ -1,6 +1,6 @@
-package com.project.repository;
+package com.project.signatureservice.repository;
 
-import com.project.model.SignerEntry;
+import com.project.signatureservice.model.SignerEntry;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

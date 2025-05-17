@@ -35,17 +35,5 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         return ResponseEntity.ok(userService.updateUser(id, userDetails));
     }
-
-    @PostMapping("/signers")
-    public ResponseEntity<String> addSigner(@RequestBody SignRequest request) {
-        userService.addSignerToDocument(request);
-        return ResponseEntity.ok("User added as signer to document");
-    }
-
-    @PostMapping("/sign")
-    public ResponseEntity<String> signDocument(@RequestBody SignRequest request) {
-        userService.signDocument(request);
-        return ResponseEntity.ok("User signed the document");
-    }
 }
 

@@ -1,6 +1,5 @@
-package com.project.model;
+package com.project.signatureservice.model;
 
-import com.project.dto.SigningStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
