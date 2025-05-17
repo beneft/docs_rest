@@ -1,12 +1,10 @@
 package com.project.service;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.project.dto.DocumentStatus;
-import com.project.dto.FullDocumentDTO;
 import com.project.model.DocumentMetadata;
 import com.project.repository.DocumentMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -21,7 +19,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -85,25 +82,6 @@ public class DocumentService {
         return mongoTemplate.find(query, DocumentMetadata.class);
     }
 
-    public List<FullDocumentDTO> searchDocumentsWithContent(String uploaderId, String documentId, String name,
-                                                            List<String> tags, String fromDate, String toDate) {
-        List<DocumentMetadata> metadataList = searchDocumentsMetadata(uploaderId, documentId, name, tags, fromDate, toDate);
-        return metadataList.stream()
-                .map(meta -> {
-                    GridFSFile file = gridFsTemplate.findOne(query(where("_id").is(meta.getId())));
-                    if (file != null) {
-                        try {
-                            GridFsResource resource = gridFsOperations.getResource(file);
-                            return new FullDocumentDTO(meta, new InputStreamResource(resource.getInputStream()));
-                        } catch (IOException e) {
-                            return null;
-                        }
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .toList();
-    }
 
     public DocumentMetadata updateMetadata(String id, DocumentMetadata updatedMetadata) {
         DocumentMetadata existing = metadataRepository.findById(id)

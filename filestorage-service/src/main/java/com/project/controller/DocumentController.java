@@ -1,7 +1,6 @@
 package com.project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.dto.FullDocumentDTO;
 import com.project.dto.UploadDocumentResponse;
 import com.project.model.DocumentMetadata;
 import com.project.service.DocumentService;
@@ -60,19 +59,6 @@ public class DocumentController {
     @GetMapping("/{id}/metadata")
     public ResponseEntity<DocumentMetadata> getDocumentMetadata(@PathVariable String id) {
         return ResponseEntity.ok(documentService.getMetadata(id));
-    }
-
-    @GetMapping
-    public ResponseEntity<List<FullDocumentDTO>> getDocuments(
-            @RequestParam(required = false) String uploaderId,
-            @RequestParam(required = false) String documentId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) List<String> tags,
-            @RequestParam(required = false) String fromDate,
-            @RequestParam(required = false) String toDate
-    ) {
-        return ResponseEntity.ok(documentService.searchDocumentsWithContent(
-                uploaderId, documentId, name, tags, fromDate, toDate));
     }
 
     @GetMapping("/metadata")
