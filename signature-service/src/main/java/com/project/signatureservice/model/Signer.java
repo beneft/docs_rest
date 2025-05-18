@@ -8,4 +8,5 @@ import lombok.Data;
 public class Signer {
     private Long userId;
     private SigningStatus status;
+    private String email;
 }
