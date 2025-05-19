@@ -22,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/templates")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class TemplateController {
 
     private final TemplateService templateService;
@@ -65,7 +66,7 @@ public class TemplateController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getFile(@PathVariable String id) throws IOException {
-        Template template = templateService.getTemplate(id);
+        Template template = templateService.getTemplateByFileId(id);
         if (template.getFileId() == null) return ResponseEntity.notFound().build();
 
         GridFSFile file = gridFsTemplate.findOne(query(where("_id").is(template.getFileId())));
