@@ -1,7 +1,8 @@
 package com.project.model;
 
-import com.project.dto.DocumentStatus;
-import com.project.dto.DocumentType;
+import com.example.commondto.DocumentStatus;
+import com.example.commondto.DocumentType;
+import com.example.commondto.SignerDTO;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -23,9 +24,9 @@ public class DocumentMetadata {
     private LocalDateTime uploadDate;
     private LocalDateTime expirationDate;
     private String uploaderId;
-
     private List<String> tags;
     private String description;
     private DocumentStatus status;
     private DocumentType type;
+    private List<SignerDTO> signers;
 }

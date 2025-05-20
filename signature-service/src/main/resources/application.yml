@@ -5,3 +5,9 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/signaturedb
+      auto-index-creation: true
+
+
+document:
+  service:
+    url: http://localhost:8082

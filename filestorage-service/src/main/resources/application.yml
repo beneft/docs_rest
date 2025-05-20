@@ -11,6 +11,7 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/documents
+      auto-index-creation: true
   application:
     name: DOCUMENT-SERVICE
 

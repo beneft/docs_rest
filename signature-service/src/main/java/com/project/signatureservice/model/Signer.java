@@ -1,5 +1,6 @@
 package com.project.signatureservice.model;
 
+import com.example.commondto.SigningStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

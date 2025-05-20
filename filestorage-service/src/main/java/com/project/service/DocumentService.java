@@ -1,6 +1,6 @@
 package com.project.service;
+import com.example.commondto.DocumentStatus;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.project.dto.DocumentStatus;
 import com.project.model.DocumentMetadata;
 import com.project.repository.DocumentMetadataRepository;
 import lombok.RequiredArgsConstructor;

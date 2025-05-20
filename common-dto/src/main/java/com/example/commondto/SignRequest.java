@@ -1,4 +1,4 @@
-package com.project.signatureservice.dto;
+package com.example.commondto;
 
 import lombok.Data;
 import lombok.Getter;

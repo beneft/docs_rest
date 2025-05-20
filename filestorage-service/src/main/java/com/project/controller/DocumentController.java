@@ -1,7 +1,7 @@
 package com.project.controller;
 
+import com.example.commondto.UploadDocumentResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.dto.UploadDocumentResponse;
 import com.project.model.DocumentMetadata;
 import com.project.service.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -40,22 +40,14 @@ public class DocumentController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id) {
+    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id) throws IOException {
         return documentService.downloadDocument(id)
                 .map(resource -> {
                     try {
-                        byte[] bytes = StreamUtils.copyToByteArray(resource.getInputStream());
-
-                        StringBuilder hexPreview = new StringBuilder();
-                        for (int i = 0; i < Math.min(128, bytes.length); i++) {
-                            hexPreview.append(String.format("%02X ", bytes[i]));
-                        }
-                        System.out.println("Preview of file bytes: " + hexPreview);
-
                         return ResponseEntity.ok()
                                 .contentType(MediaType.parseMediaType(resource.getContentType()))
                                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                                .body(new InputStreamResource(new ByteArrayInputStream(bytes)));
+                                .body(new InputStreamResource(resource.getInputStream()));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

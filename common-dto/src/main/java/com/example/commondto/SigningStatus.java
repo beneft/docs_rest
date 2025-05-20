@@ -1,4 +1,4 @@
-package com.project.signatureservice.model;
+package com.example.commondto;
 
 public enum SigningStatus {
     PENDING, SIGNED, DECLINED;
