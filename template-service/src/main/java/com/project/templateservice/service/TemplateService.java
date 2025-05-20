@@ -4,26 +4,33 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.project.templateservice.dto.DocumentItem;
 import com.project.templateservice.dto.FieldDto;
 import com.project.templateservice.dto.TemplateDto;
+import com.project.templateservice.feign.DocumentFeignClient;
 import com.project.templateservice.model.Field;
 import com.project.templateservice.model.Template;
 import com.project.templateservice.repository.TemplateRepository;
+import fr.opensagres.xdocreport.core.XDocReportException;
+import fr.opensagres.xdocreport.core.document.SyntaxKind;
+import fr.opensagres.xdocreport.document.IXDocReport;
+import fr.opensagres.xdocreport.document.registry.XDocReportRegistry;
+import fr.opensagres.xdocreport.template.IContext;
+import fr.opensagres.xdocreport.template.TemplateEngineKind;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.*;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +38,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TemplateService {
-
+    @Autowired
+    private DocumentFeignClient feignClient;
     private final TemplateRepository templateRepository;
     private final GridFsTemplate gridFsTemplate;
     private final GridFsOperations gridFsOps;
@@ -111,56 +119,27 @@ public class TemplateService {
         if (file == null) throw new RuntimeException("File not found in GridFS");
 
         try (InputStream in = gridFsOps.getResource(file).getInputStream();
-             XWPFDocument doc = new XWPFDocument(in);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-            replacePlaceholders(doc, fieldValues);
-            doc.write(out);
+            // Load the DOCX template into XDocReport
+            IXDocReport report = XDocReportRegistry.getRegistry().loadReport(in, TemplateEngineKind.Velocity);
 
-//            feignClient.sendFilledDocument(
-//                    template.getName(),
-//                    out.toByteArray(),
-//                    file.getMetadata().getString("_contentType")
-//            );
+            // Create context and put fields from fieldValues map
+            IContext context = report.createContext();
+            fieldValues.forEach(context::put);
+
+            report.process(context, out);
+
+            feignClient.sendFilledDocument(
+                    template.getName(),
+                    file.getMetadata().getString("_contentType"),
+                    out.toByteArray()
+            );
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to process template", e);
-        }
-    }
-
-    private void replacePlaceholders(XWPFDocument doc, Map<String, Object> values) {
-        for (XWPFParagraph paragraph : doc.getParagraphs()) {
-            for (XWPFRun run : paragraph.getRuns()) {
-                String text = run.getText(0);
-                if (text != null) {
-                    for (Map.Entry<String, Object> entry : values.entrySet()) {
-                        text = text.replace("${" + entry.getKey() + "}", String.valueOf(entry.getValue()));
-                    }
-                    run.setText(text, 0);
-                }
-            }
-        }
-
-        for (XWPFTable table : doc.getTables()) {
-            table.getRows().forEach(row ->
-                    row.getTableCells().forEach(cell ->
-                            replacePlaceholders(cell.getParagraphs(), values)
-                    )
-            );
-        }
-    }
-
-    private void replacePlaceholders(List<XWPFParagraph> paragraphs, Map<String, Object> values) {
-        for (XWPFParagraph paragraph : paragraphs) {
-            for (XWPFRun run : paragraph.getRuns()) {
-                String text = run.getText(0);
-                if (text != null) {
-                    for (Map.Entry<String, Object> entry : values.entrySet()) {
-                        text = text.replace("${" + entry.getKey() + "}", String.valueOf(entry.getValue()));
-                    }
-                    run.setText(text, 0);
-                }
-            }
+        } catch (XDocReportException e) {
+            throw new RuntimeException(e);
         }
     }
 }

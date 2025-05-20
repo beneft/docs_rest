@@ -1,5 +1,7 @@
 package com.project.controller;
 
+import com.example.commondto.DocumentStatus;
+import com.example.commondto.DocumentType;
 import com.example.commondto.UploadDocumentResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.model.DocumentMetadata;
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -36,6 +39,24 @@ public class DocumentController {
 
         String id = documentService.uploadDocument(file, metadata);
         return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
+    }
+
+    @PostMapping("/template")
+    public ResponseEntity<UploadDocumentResponse> uploadTemplateDocumentRaw(
+            @RequestHeader("X-File-Name") String name,
+            @RequestHeader("X-Content-Type") String contentType,
+            @RequestBody byte[] data) throws IOException {
+
+        DocumentMetadata metadata = DocumentMetadata.builder()
+                .name(name)
+                .contentType(contentType)
+                .uploadDate(LocalDateTime.now())
+                .status(DocumentStatus.ACTIVE)
+                .type(DocumentType.DRAFT)
+                .build();
+
+        String id = documentService.uploadDocumentRaw(data, metadata);
+        return ResponseEntity.ok(new UploadDocumentResponse("Template uploaded successfully", id));
     }
 
 

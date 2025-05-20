@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,13 @@ public class DocumentService {
         metadata.setUploadDate(LocalDateTime.now());
         metadata.setContentType(file.getContentType());
         metadata.setStatus(DocumentStatus.ACTIVE);
+        metadataRepository.save(metadata);
+        return fileId.toHexString();
+    }
+
+    public String uploadDocumentRaw(byte[] data, DocumentMetadata metadata) throws IOException {
+        ObjectId fileId = gridFsTemplate.store(new ByteArrayInputStream(data), metadata.getName(), metadata.getContentType());
+        metadata.setId(fileId.toHexString());
         metadataRepository.save(metadata);
         return fileId.toHexString();
     }
