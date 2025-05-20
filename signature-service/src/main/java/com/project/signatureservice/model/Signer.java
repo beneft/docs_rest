@@ -14,9 +14,7 @@ public class Signer {
     private String fullName;
     private String position;
 
-    private Long substituteId;
-    private String substituteEmail;
-    private String substituteName;
+    private Deputy deputy;
 
     private SigningStatus status = SigningStatus.PENDING;
 

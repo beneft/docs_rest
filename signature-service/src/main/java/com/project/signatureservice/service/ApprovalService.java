@@ -46,7 +46,10 @@ public class ApprovalService {
 
         return process.getSigners().stream().anyMatch(s -> {
             boolean isMain = s.getUserId().equals(userId);
-            boolean isSubstitute = s.getSubstituteId() != null && s.getSubstituteId().equals(userId);
+            boolean isSubstitute = false;
+            if (s.getDeputy()!= null) {
+                isSubstitute =  s.getDeputy().getId().equals(userId);
+            }
             boolean isPending = s.getStatus() == SigningStatus.PENDING;
 
             if (!isPending) return false;
@@ -55,7 +58,11 @@ public class ApprovalService {
                 return isMain || isSubstitute;
             } else {
                 Signer current = process.getSigners().get(process.getCurrentSignerIndex());
-                return current.getUserId().equals(userId) || userId.equals(current.getSubstituteId());
+                if (s.getDeputy()!=null) {
+                    return current.getUserId().equals(userId) || userId.equals(current.getDeputy().getId());
+                } else {
+                    return current.getUserId().equals(userId);
+                }
             }
         });
     }
@@ -68,7 +75,8 @@ public class ApprovalService {
                 .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
 
         Signer signer = process.getSigners().stream()
-                .filter(s -> s.getUserId().equals(userId) || userId.equals(s.getSubstituteId()))
+                .filter(s -> s.getUserId().equals(userId) ||
+                        (s.getDeputy() != null && userId.equals(s.getDeputy().getId())))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
 
@@ -116,7 +124,8 @@ public class ApprovalService {
                 .orElseThrow(() -> new IllegalArgumentException("Signing process not found"));
 
         Signer signer = process.getSigners().stream()
-                .filter(s -> s.getUserId().equals(userId) || userId.equals(s.getSubstituteId()))
+                .filter(s -> s.getUserId().equals(userId) ||
+                        (s.getDeputy() != null && userId.equals(s.getDeputy().getId())))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
 
