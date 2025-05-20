@@ -1,11 +1,20 @@
 package com.project.signatureservice.controller;
 
+import com.example.commondto.CmsDetailsDTO;
+import com.example.commondto.DocumentMetadataDTO;
+import com.example.commondto.SignatureDTO;
+import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.model.Signature;
 import com.project.signatureservice.service.SignatureService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -14,10 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SignatureController {
 
-    public ResponseEntity<Void> verifySignatures(){return null;};
 
-    public ResponseEntity<Void> startDocumentApproval(){return null;}
-
+    @PostMapping("/verify")
+    public ResponseEntity<CmsDetailsDTO> verifySignatures(
+            @RequestParam("file") MultipartFile uploadedFile,
+            @RequestParam("id") String documentId) {
+        return ResponseEntity.ok(signatureService.verifySignatures(uploadedFile,documentId));
+    }
 
     private final SignatureService signatureService;
 
@@ -34,7 +46,7 @@ public class SignatureController {
     }
 
     @GetMapping("/document/{documentId}")
-    public ResponseEntity<List<Signature>> getSignaturesByDocumentId(@PathVariable String documentId) {
+    public ResponseEntity<List<SignatureDTO>> getSignaturesByDocumentId(@PathVariable String documentId) {
         return ResponseEntity.ok(signatureService.getSignaturesByDocumentId(documentId));
     }
 
@@ -42,6 +54,8 @@ public class SignatureController {
     public ResponseEntity<Signature> createSignature(@RequestBody Signature signature) {
         return ResponseEntity.ok(signatureService.saveSignature(signature));
     }
+
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSignature(@PathVariable String id) {
