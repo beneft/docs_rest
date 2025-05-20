@@ -1,6 +1,7 @@
 package com.project.model;
 
 import com.project.dto.DocumentStatus;
+import com.project.dto.DocumentType;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -17,7 +18,6 @@ import java.util.List;
 public class DocumentMetadata {
     @Id
     private String id;
-
     private String name;
     private String contentType;
     private LocalDateTime uploadDate;
@@ -26,6 +26,6 @@ public class DocumentMetadata {
 
     private List<String> tags;
     private String description;
-
     private DocumentStatus status;
+    private DocumentType type;
 }

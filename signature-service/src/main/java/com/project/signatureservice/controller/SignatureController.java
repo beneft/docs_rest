@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/signatures")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3004"})
 @RequiredArgsConstructor
 public class SignatureController {
 
