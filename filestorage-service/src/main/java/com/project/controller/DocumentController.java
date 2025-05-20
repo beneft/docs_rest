@@ -5,13 +5,17 @@ import com.project.dto.UploadDocumentResponse;
 import com.project.model.DocumentMetadata;
 import com.project.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,10 +44,18 @@ public class DocumentController {
         return documentService.downloadDocument(id)
                 .map(resource -> {
                     try {
+                        byte[] bytes = StreamUtils.copyToByteArray(resource.getInputStream());
+
+                        StringBuilder hexPreview = new StringBuilder();
+                        for (int i = 0; i < Math.min(128, bytes.length); i++) {
+                            hexPreview.append(String.format("%02X ", bytes[i]));
+                        }
+                        System.out.println("Preview of file bytes: " + hexPreview);
+
                         return ResponseEntity.ok()
                                 .contentType(MediaType.parseMediaType(resource.getContentType()))
                                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                                .body(new InputStreamResource(resource.getInputStream()));
+                                .body(new InputStreamResource(new ByteArrayInputStream(bytes)));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -82,4 +94,22 @@ public class DocumentController {
         DocumentMetadata metadata = documentService.updateMetadata(id, updatedMetadata);
         return ResponseEntity.ok(metadata);
     }
+
+    @GetMapping("/internal/{id}/bytes")
+    public ResponseEntity<byte[]> getBytesInternal(@PathVariable String id) {
+        return (ResponseEntity<byte[]>) documentService.downloadDocument(id)
+                .map(res -> {
+                    try {
+                        return ResponseEntity.ok(StreamUtils.copyToByteArray(res.getInputStream()));
+                    } catch (IOException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/next-id")
+    public ResponseEntity<String> generateNextId() {
+        return ResponseEntity.ok(new ObjectId().toHexString());
+    }
+
 }
