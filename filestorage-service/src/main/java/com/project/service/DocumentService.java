@@ -1,4 +1,5 @@
 package com.project.service;
+import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.DocumentStatus;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.project.model.DocumentMetadata;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
@@ -68,8 +70,8 @@ public class DocumentService {
         return metadataRepository.findById(id).get();
     }
 
-    public List<DocumentMetadata> searchDocumentsMetadata(String uploaderId, String documentId, String name,
-                                                          List<String> tags, String fromDate, String toDate) {
+    public List<DocumentMetadataDTO> searchDocumentsMetadata(String uploaderId, String documentId, String name,
+                                                             List<String> tags, String fromDate, String toDate) {
         Query query = new Query();
         Criteria criteria = new Criteria();
 
@@ -87,11 +89,16 @@ public class DocumentService {
         }
 
         query.addCriteria(criteria);
-        return mongoTemplate.find(query, DocumentMetadata.class);
+
+        List<DocumentMetadata> results = mongoTemplate.find(query, DocumentMetadata.class);
+        return results.stream()
+                .map(this::MetadataToDto)
+                .collect(Collectors.toList());
     }
 
 
-    public DocumentMetadata updateMetadata(String id, DocumentMetadata updatedMetadata) {
+
+    public DocumentMetadataDTO updateMetadata(String id, DocumentMetadataDTO updatedMetadata) {
         DocumentMetadata existing = metadataRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
 
@@ -101,7 +108,8 @@ public class DocumentService {
         existing.setUploaderId(updatedMetadata.getUploaderId());
         existing.setExpirationDate(updatedMetadata.getExpirationDate());
 
-        return metadataRepository.save(existing);
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
     }
 
 
@@ -118,4 +126,20 @@ public class DocumentService {
             }
         }
     }
+
+    private DocumentMetadataDTO MetadataToDto(DocumentMetadata entity) {
+        return DocumentMetadataDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .contentType(entity.getContentType())
+                .uploadDate(entity.getUploadDate())
+                .expirationDate(entity.getExpirationDate())
+                .uploaderId(entity.getUploaderId())
+                .tags(entity.getTags())
+                .description(entity.getDescription())
+                .status(entity.getStatus())
+                .type(entity.getType())
+                .build();
+    }
+
 }

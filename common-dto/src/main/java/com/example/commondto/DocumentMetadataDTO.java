@@ -9,6 +9,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DocumentMetadataDTO {
     private String id;
     private String name;
@@ -18,5 +19,7 @@ public class DocumentMetadataDTO {
     private String uploaderId;
     private List<String> tags;
     private String description;
-
+    private DocumentStatus status;
+    private DocumentType type;
+    private List<SignerDTO> signers;
 }

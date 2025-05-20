@@ -28,5 +28,4 @@ public class DocumentMetadata {
     private String description;
     private DocumentStatus status;
     private DocumentType type;
-    private List<SignerDTO> signers;
 }

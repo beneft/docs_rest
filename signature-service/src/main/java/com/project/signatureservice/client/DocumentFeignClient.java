@@ -5,6 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "document-service", url = "${document.service.url}")
 public interface DocumentFeignClient {
@@ -14,4 +16,7 @@ public interface DocumentFeignClient {
 
     @GetMapping("/documents/{id}/metadata")
     ResponseEntity<DocumentMetadataDTO> getDocumentMetadata(@PathVariable("id") String id);
+
+    @PutMapping("/documents/{id}/metadata")
+    ResponseEntity<DocumentMetadataDTO> updateDocumentMetadata(@PathVariable("id") String id, @RequestBody DocumentMetadataDTO updatedMetadata);
 }

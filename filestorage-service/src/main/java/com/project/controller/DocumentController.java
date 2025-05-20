@@ -1,5 +1,6 @@
 package com.project.controller;
 
+import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.DocumentStatus;
 import com.example.commondto.DocumentType;
 import com.example.commondto.UploadDocumentResponse;
@@ -88,7 +89,7 @@ public class DocumentController {
     }
 
     @GetMapping("/metadata")
-    public ResponseEntity<List<DocumentMetadata>> getDocumentsMetadata(
+    public ResponseEntity<List<DocumentMetadataDTO>> getDocumentsMetadata(
             @RequestParam(required = false) String uploaderId,
             @RequestParam(required = false) String documentId,
             @RequestParam(required = false) String name,
@@ -101,10 +102,10 @@ public class DocumentController {
     }
 
     @PutMapping("/{id}/metadata")
-    public ResponseEntity<DocumentMetadata> updateMetadata(
+    public ResponseEntity<DocumentMetadataDTO> updateMetadata(
             @PathVariable String id,
-            @RequestBody DocumentMetadata updatedMetadata) {
-        DocumentMetadata metadata = documentService.updateMetadata(id, updatedMetadata);
+            @RequestBody DocumentMetadataDTO updatedMetadata) {
+        DocumentMetadataDTO metadata = documentService.updateMetadata(id, updatedMetadata);
         return ResponseEntity.ok(metadata);
     }
 
