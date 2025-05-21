@@ -18,5 +18,5 @@ public class Signer {
 
     private SigningStatus status = SigningStatus.PENDING;
 
-    private Integer order = 0;
+    private Integer order = -1;
 }

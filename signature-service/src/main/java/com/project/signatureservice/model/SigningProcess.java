@@ -18,6 +18,7 @@ import java.util.List;
 public class SigningProcess {
     @Id
     private String documentId;
+    private Long initiator;
     private ApprovalType approvalType;
     private List<Signer> signers = new ArrayList<>();
     private int currentSignerIndex = 0;

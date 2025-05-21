@@ -58,6 +58,8 @@ public class TemplateController {
         return ResponseEntity.ok(templateService.getFields(id));
     }
 
+
+    // TODO: ДОБАВИТЬ UPLOADER ID
     @PostMapping("/{id}/fill")
     public ResponseEntity<Void> fillTemplate(@PathVariable String id, @RequestBody Map<String, Object> fieldValues) {
         templateService.fillTemplate(id, fieldValues);
