@@ -45,7 +45,7 @@ public class DocumentService {
         return fileId.toHexString();
     }
 
-    public String uploadDocumentRaw(byte[] data, DocumentMetadata metadata) throws IOException {
+    public String uploadDocumentRaw(byte[] data, DocumentMetadata metadata) {
         ObjectId fileId = gridFsTemplate.store(new ByteArrayInputStream(data), metadata.getName(), metadata.getContentType());
         metadata.setId(fileId.toHexString());
         metadataRepository.save(metadata);
@@ -140,6 +140,16 @@ public class DocumentService {
                 .status(entity.getStatus())
                 .type(entity.getType())
                 .build();
+    }
+
+    public List<DocumentMetadataDTO> findByUploaderId(String uploaderId) {
+        List<DocumentMetadata> list = metadataRepository.findAll().stream()
+                .filter(doc -> uploaderId.equals(doc.getUploaderId()))
+                .collect(Collectors.toList());
+
+        return list.stream()
+                .map(this::MetadataToDto)
+                .collect(Collectors.toList());
     }
 
 }

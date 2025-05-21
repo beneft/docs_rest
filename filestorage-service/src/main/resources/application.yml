@@ -14,6 +14,11 @@ spring:
       auto-index-creation: true
   application:
     name: DOCUMENT-SERVICE
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/documentsUsersRealm
 
 springdoc:
   api-docs:

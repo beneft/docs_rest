@@ -14,6 +14,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -121,6 +124,13 @@ public class DocumentController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("@sec.isOwner(#jwt, #uploaderId)")
+    @GetMapping("/author/{uploaderId}")
+    public ResponseEntity<List<DocumentMetadataDTO>> getByUploader(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String uploaderId) {
+        return ResponseEntity.ok(documentService.findByUploaderId(uploaderId));
+    }
     @GetMapping("/next-id")
     public ResponseEntity<String> generateNextId() {
         return ResponseEntity.ok(new ObjectId().toHexString());
