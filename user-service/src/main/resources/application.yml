@@ -5,14 +5,37 @@ server:
 spring:
   application:
     name: USER-SERVICE
-  datasource:
-    url: jdbc:postgresql://localhost:5432/users_db
-    username: postgres
-    password: 222316pb
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/documentsUsersRealm
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/users_db
+#    username: postgres
+#    password: 222316pb
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+
+#keycloak:
+#  realm: documentsUsersRealm
+#  auth-server-url: http://localhost:8080/
+#  resource: documents-flow-client
+#  credentials:
+#    secret: rHwwJzOPsmaE4ORWac9lTKAEiH8GiQmA
+#  admin-user: admin
+#  admin-password: admin
+
+keycloak:
+  server-url: http://localhost:8080
+  realm: documentsUsersRealm
+  client-id: documents-flow-client
+  client-secret: rHwwJzOPsmaE4ORWac9lTKAEiH8GiQmA
+  admin-user: admin
+  admin-password: admin
+
 
 springdoc:
   api-docs:

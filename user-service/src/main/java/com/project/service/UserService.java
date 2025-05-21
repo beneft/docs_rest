@@ -1,36 +1,110 @@
 package com.project.service;
 
-import com.project.dto.SignRequest;
-import com.project.model.User;
-import com.project.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.project.config.KeycloakProperties;
+import com.project.dto.*;
+import jakarta.ws.rs.core.Response;
+import lombok.RequiredArgsConstructor;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
-    private final UserRepository userRepository;
 
-    @Autowired
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    private final Keycloak keycloak;
+    private final KeycloakProperties props;
+    private final WebClient web = WebClient.builder().build();
+
+    /* ---------- РЕГИСТРАЦИЯ -------------------------------------------- */
+    public void register(RegisterRequest r) {
+        UserRepresentation u = new UserRepresentation();
+        u.setEmail(r.email());          // ключевое поле
+        u.setUsername(r.email());       // безопасно заполняем тем же e-mail
+        u.setFirstName(r.firstName());
+        u.setLastName(r.lastName());
+        u.setEnabled(true);
+
+        // Пользовательские атрибуты
+        Map<String, List<String>> at = new HashMap<>();
+        at.put("organization", List.of(r.organization()));
+        at.put("position",     List.of(r.position()));
+        at.put("phone",        List.of(r.phone()));
+        u.setAttributes(at);
+
+        Response resp = keycloak.realm(props.getRealm()).users().create(u);
+        if (resp.getStatus() != 201) throw new IllegalStateException("KC create: " + resp);
+
+        String id = resp.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+
+        CredentialRepresentation pass = new CredentialRepresentation();
+        pass.setType(CredentialRepresentation.PASSWORD);
+        pass.setValue(r.password());
+        keycloak.realm(props.getRealm()).users().get(id).resetPassword(pass);
     }
 
-    public User createUser(User user) {
-        return userRepository.save(user);
+    /* ---------- ЛОГИН (grant_type=password) ----------------------------- */
+    public AuthResponse login(LoginRequest r) {
+        Map tok = web.post()
+                .uri(props.tokenUrl())                         // helper, см. ниже
+                .body(BodyInserters.fromFormData("grant_type", "password")
+                        .with("client_id", props.getClientId())
+                        .with("client_secret", props.getClientSecret())
+                        .with("username", r.email())                // <-- email вместо username
+                        .with("password", r.password()))
+                .retrieve().bodyToMono(Map.class).block();
+
+        return new AuthResponse(
+                (String) tok.get("access_token"),
+                (String) tok.get("refresh_token"),
+                ((Number) tok.get("expires_in")).longValue(),
+                (String) tok.get("token_type"));
     }
 
-    public Optional<User> getUser(Long id) {
-        return userRepository.findById(id);
+    /* ---------- ПОЛУЧИТЬ / ИЗМЕНИТЬ / УДАЛИТЬ --------------------------- */
+    public UserDto getById(String id) { return map(kcUser(id)); }
+
+    public UserDto update(String id, UpdateProfileRequest r) {
+        UserRepresentation u = kcUser(id);
+        if (r.email() != null) { u.setEmail(r.email()); u.setUsername(r.email()); }
+        if (r.firstName() != null) u.setFirstName(r.firstName());
+        if (r.lastName()  != null) u.setLastName(r.lastName());
+
+        Map<String, List<String>> at = u.getAttributes() == null ?
+                new HashMap<>() : u.getAttributes();
+        if (r.organization() != null) at.put("organization", List.of(r.organization()));
+        if (r.position()     != null) at.put("position",     List.of(r.position()));
+        if (r.phone()        != null) at.put("phone",        List.of(r.phone()));
+        u.setAttributes(at);
+
+        keycloak.realm(props.getRealm()).users().get(id).update(u);
+        return map(u);
     }
 
-    public User updateUser(Long id, User userDetails) {
-        return userRepository.findById(id).map(user -> {
-            user.setName(userDetails.getName());
-            return userRepository.save(user);
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+    public void delete(String id) {
+        keycloak.realm(props.getRealm()).users().get(id).remove();
+    }
+
+    /* ---------- Внутренние помощники ------------------------------------ */
+    private UserRepresentation kcUser(String id) {
+        return keycloak.realm(props.getRealm()).users().get(id).toRepresentation();
+    }
+    private UserDto map(UserRepresentation u) {
+        Map<String, List<String>> at = Optional.ofNullable(u.getAttributes())
+                .orElse(Map.of());
+        return new UserDto(
+                u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(),
+                at.getOrDefault("organization", List.of("")).get(0),
+                at.getOrDefault("position",     List.of("")).get(0),
+                at.getOrDefault("phone",        List.of("")).get(0));
     }
 }
-
