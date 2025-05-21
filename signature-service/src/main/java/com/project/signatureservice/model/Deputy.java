@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class Deputy {
-    private Long id;
+    private String id;
     private String email;
     private String name;
 }

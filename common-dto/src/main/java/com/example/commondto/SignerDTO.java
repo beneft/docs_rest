@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 public class SignerDTO {
 
-    private Long userId;
+    private String userId;
     private String fullName;
     private String email;
     private String position;

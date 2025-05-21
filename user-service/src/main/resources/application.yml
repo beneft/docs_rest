@@ -32,7 +32,7 @@ keycloak:
   server-url: http://localhost:8080
   realm: documentsUsersRealm
   client-id: documents-flow-client
-  client-secret: rHwwJzOPsmaE4ORWac9lTKAEiH8GiQmA
+  client-secret: w00w6OvFwRmLWlLVymAHGnuqBZ2h13Vr
   admin-user: admin
   admin-password: admin
 

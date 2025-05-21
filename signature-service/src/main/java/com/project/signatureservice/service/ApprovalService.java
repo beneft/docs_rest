@@ -23,7 +23,7 @@ public class ApprovalService {
     private final SignatureRepository signatureRepository;
     private final SigningProcessRepository signingProcessRepository;
     private final DocumentFeignClient documentClient;
-
+    @Autowired
     private NotificationClient notificationClient;
 
     public void startSigningProcess(SigningProcess process) {
@@ -73,6 +73,37 @@ public class ApprovalService {
         });
     }
 
+    public boolean canSignByEmail(String documentId, String email) {
+        SigningProcess process = signingProcessRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
+
+        if (process.getSigners().stream().anyMatch(s -> s.getStatus() == SigningStatus.DECLINED)) {
+            return false;
+        }
+
+        return process.getSigners().stream().anyMatch(s -> {
+            boolean isMain = s.getEmail().equals(email);
+            boolean isSubstitute = false;
+            if (s.getDeputy()!= null) {
+                isSubstitute =  s.getDeputy().getEmail().equals(email);
+            }
+            boolean isPending = s.getStatus() == SigningStatus.PENDING;
+
+            if (!isPending) return false;
+
+            if (process.getApprovalType() == ApprovalType.PARALLEL) {
+                return isMain || isSubstitute;
+            } else {
+                Signer current = process.getSigners().get(process.getCurrentSignerIndex());
+                if (s.getDeputy()!=null) {
+                    return current.getEmail().equals(email) || email.equals(current.getDeputy().getEmail());
+                } else {
+                    return current.getEmail().equals(email);
+                }
+            }
+        });
+    }
+
     public void applySignature(Signature signature) {
         String documentId = signature.getDocumentId();
         Long userId = Long.parseLong(signature.getAuthorId());
@@ -81,14 +112,20 @@ public class ApprovalService {
                 .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
 
 
-        // TODO: ВОТ ЗДЕСЬ ПО ИМЕЙЛУ ДЛЯ ТЕХ КТО БЕЗ АЙДИ
         Signer signer = process.getSigners().stream()
-                .filter(s -> s.getUserId().equals(userId) ||
-                        (s.getDeputy() != null && userId.equals(s.getDeputy().getId())))
+                .filter(s ->
+                        (s.getUserId() != null && s.getUserId().equals(userId)) ||
+                                (s.getUserId() == null && s.getEmail().equalsIgnoreCase(signature.getAuthorName())) ||
+                                (s.getDeputy() != null && userId != -1 && userId.equals(s.getDeputy().getId()))
+                )
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
-        // тут тоже
-        if (!canSign(documentId, userId)) {
+
+        if (userId!=-1) {
+            if (!canSign(documentId, userId)) {
+                throw new IllegalStateException("Signing not allowed for this user at this time");
+            }
+        } else if (!canSignByEmail(documentId, signature.getAuthorName())) {
             throw new IllegalStateException("Signing not allowed for this user at this time");
         }
 
@@ -158,8 +195,8 @@ public class ApprovalService {
                             process.getSigners().indexOf(s) == process.getCurrentSignerIndex();
                     return new SignerDTO(
                             s.getUserId(),
-                            s.getEmail(),
                             s.getFullName(),
+                            s.getEmail(),
                             s.getPosition(),
                             s.getStatus(),
                             canSign

@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class Signer {
-    private Long userId;
+    private String userId;
     private String email;
     private String fullName;
     private String position;
