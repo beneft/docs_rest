@@ -2,15 +2,18 @@ package com.project.signatureservice.service;
 
 import com.example.commondto.*;
 import com.project.signatureservice.client.DocumentFeignClient;
+import com.project.signatureservice.client.NotificationClient;
 import com.project.signatureservice.model.*;
 import com.project.signatureservice.repository.SignatureRepository;
 import com.project.signatureservice.repository.SigningProcessRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,18 +24,21 @@ public class ApprovalService {
     private final SigningProcessRepository signingProcessRepository;
     private final DocumentFeignClient documentClient;
 
+    private NotificationClient notificationClient;
+
     public void startSigningProcess(SigningProcess process) {
         if (process.getApprovalType() == ApprovalType.SEQUENTIAL) {
             process.getSigners().sort(Comparator.comparingInt(Signer::getOrder));
         }
         signingProcessRepository.save(process);
+        notificationClient.notifySigners(buildNotificationRequest(process));
     }
 
     public List<SignerDTO> getSigners(String documentId) {
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Signing process not found"));
         return process.getSigners().stream()
-                .map(s -> new SignerDTO(s.getUserId(), s.getFullName(), s.getEmail(), s.getPosition(), s.getStatus(), false))
+                .map(s -> new SignerDTO(s.getUserId(), s.getFullName(), s.getEmail(), s.getPosition(), s.getStatus(), s.getOrder() == -1 || s.getOrder() == process.getCurrentSignerIndex()))
                 .collect(Collectors.toList());
     }
 
@@ -46,7 +52,10 @@ public class ApprovalService {
 
         return process.getSigners().stream().anyMatch(s -> {
             boolean isMain = s.getUserId().equals(userId);
-            boolean isSubstitute = s.getSubstituteId() != null && s.getSubstituteId().equals(userId);
+            boolean isSubstitute = false;
+            if (s.getDeputy()!= null) {
+                isSubstitute =  s.getDeputy().getId().equals(userId);
+            }
             boolean isPending = s.getStatus() == SigningStatus.PENDING;
 
             if (!isPending) return false;
@@ -55,7 +64,11 @@ public class ApprovalService {
                 return isMain || isSubstitute;
             } else {
                 Signer current = process.getSigners().get(process.getCurrentSignerIndex());
-                return current.getUserId().equals(userId) || userId.equals(current.getSubstituteId());
+                if (s.getDeputy()!=null) {
+                    return current.getUserId().equals(userId) || userId.equals(current.getDeputy().getId());
+                } else {
+                    return current.getUserId().equals(userId);
+                }
             }
         });
     }
@@ -67,11 +80,14 @@ public class ApprovalService {
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
 
+
+        // TODO: ВОТ ЗДЕСЬ ПО ИМЕЙЛУ ДЛЯ ТЕХ КТО БЕЗ АЙДИ
         Signer signer = process.getSigners().stream()
-                .filter(s -> s.getUserId().equals(userId) || userId.equals(s.getSubstituteId()))
+                .filter(s -> s.getUserId().equals(userId) ||
+                        (s.getDeputy() != null && userId.equals(s.getDeputy().getId())))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
-
+        // тут тоже
         if (!canSign(documentId, userId)) {
             throw new IllegalStateException("Signing not allowed for this user at this time");
         }
@@ -79,7 +95,7 @@ public class ApprovalService {
         signer.setStatus(SigningStatus.SIGNED);
         signature.setSigningDate(LocalDateTime.now());
         signature.setCmsValid(true);
-        signature.setAuthorId(String.valueOf(signer.getUserId()));
+        //signature.setAuthorId(String.valueOf(signer.getUserId()));
 
         signatureRepository.save(signature);
 
@@ -116,7 +132,8 @@ public class ApprovalService {
                 .orElseThrow(() -> new IllegalArgumentException("Signing process not found"));
 
         Signer signer = process.getSigners().stream()
-                .filter(s -> s.getUserId().equals(userId) || userId.equals(s.getSubstituteId()))
+                .filter(s -> s.getUserId().equals(userId) ||
+                        (s.getDeputy() != null && userId.equals(s.getDeputy().getId())))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
 
@@ -132,4 +149,29 @@ public class ApprovalService {
         documentClient.updateDocumentMetadata(documentId, doc);
     }
 
+
+    private NotificationRequest buildNotificationRequest(SigningProcess process) {
+        List<SignerDTO> signerDTOs = process.getSigners().stream()
+                .filter(s -> !Objects.equals(s.getUserId(), process.getInitiator()))
+                .map(s -> {
+                    boolean canSign = process.getApprovalType() == ApprovalType.PARALLEL ||
+                            process.getSigners().indexOf(s) == process.getCurrentSignerIndex();
+                    return new SignerDTO(
+                            s.getUserId(),
+                            s.getEmail(),
+                            s.getFullName(),
+                            s.getPosition(),
+                            s.getStatus(),
+                            canSign
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new NotificationRequest(
+                process.getDocumentId(),
+                process.getInitiator(),
+                "Document " + process.getDocumentId(),
+                signerDTOs
+        );
+    }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/approval")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3004"})
 @RequiredArgsConstructor
 public class ApprovalController {
 
