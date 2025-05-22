@@ -14,11 +14,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +43,17 @@ public class DocumentController {
         String id = documentService.uploadDocument(file, metadata);
         return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
     }
+
+//    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<UploadDocumentResponse> uploadDocument(
+//            @AuthenticationPrincipal Jwt jwt,
+//            @RequestPart("file") MultipartFile file,
+//            @RequestPart("metadata") DocumentMetadata metadata) throws IOException {
+//
+//        metadata.setUploaderId(jwt.getSubject());      // жёстко проставляем
+//        String id = documentService.uploadDocument(file, metadata);
+//        return ResponseEntity.ok(new UploadDocumentResponse("Uploaded", id));
+//    }
 
     @PostMapping("/template")
     public ResponseEntity<UploadDocumentResponse> uploadTemplateDocumentRaw(
@@ -77,11 +90,14 @@ public class DocumentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("@sec.isAuthor(#id, #jwt.subject, @documentMetadataRepository)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable String id) {
-        documentService.deleteDocument(id);
+    public ResponseEntity<Void> deleteDocument(@PathVariable String id,
+                                               @AuthenticationPrincipal Jwt jwt) {
+        documentService.deleteDocument(id);            // здесь уже безопасно
         return ResponseEntity.noContent().build();
     }
+
 
     @GetMapping("/{id}/metadata")
     public ResponseEntity<DocumentMetadata> getDocumentMetadata(@PathVariable String id) {
@@ -121,6 +137,13 @@ public class DocumentController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("@sec.isAuthorByRequest(#jwt, #uploaderId)")
+    @GetMapping("/author/{uploaderId}")
+    public ResponseEntity<List<DocumentMetadataDTO>> getByUploader(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String uploaderId) {
+        return ResponseEntity.ok(documentService.findByUploaderId(uploaderId));
+    }
     @GetMapping("/next-id")
     public ResponseEntity<String> generateNextId() {
         return ResponseEntity.ok(new ObjectId().toHexString());
