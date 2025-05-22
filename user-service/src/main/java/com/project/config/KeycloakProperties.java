@@ -16,9 +16,9 @@ public class KeycloakProperties {
     private String serverUrl;      // http://localhost:8080   (без завершающего / )
     private String realm;          // documentsUsersRealm
     private String clientId;       // documents-flow-client
-    private String clientSecret;   // ****
-    private String adminUser;      // admin
-    private String adminPassword;  // admin
+    private String clientSecret;
+    private String adminUser;
+    private String adminPassword;
 
     /** Полный URL для запроса токена grant_type=password */
     public String tokenUrl() {

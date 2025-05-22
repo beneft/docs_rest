@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 public class NotificationRequest {
     private String documentId;
-    private Long initiator;
+    private String initiator;
     private String documentName;
     private List<SignerDTO> signers;
 }

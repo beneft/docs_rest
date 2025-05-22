@@ -19,8 +19,7 @@ import java.util.List;
 public class ApprovalController {
 
     private final ApprovalService approvalService;
-
-    @PostMapping("/start")
+    @PostMapping("/start") //authorize
     public ResponseEntity<String> startSigningProcess(@RequestBody SigningProcess signingProcess) {
         approvalService.startSigningProcess(signingProcess);
         return ResponseEntity.ok("Signing process started.");
