@@ -41,7 +41,7 @@ public class DocumentController {
                 new ObjectMapper().readValue(metadataJson, DocumentMetadata.class);
         metadata.setUploaderId(jwt.getSubject());
         String id = documentService.uploadDocument(file, metadata);
-        return ResponseEntity.ok(new UploadDocumentResponse("Uploaded", id));
+        return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
     }
 
 
