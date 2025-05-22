@@ -44,6 +44,17 @@ public class DocumentController {
         return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
     }
 
+//    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<UploadDocumentResponse> uploadDocument(
+//            @AuthenticationPrincipal Jwt jwt,
+//            @RequestPart("file") MultipartFile file,
+//            @RequestPart("metadata") DocumentMetadata metadata) throws IOException {
+//
+//        metadata.setUploaderId(jwt.getSubject());      // жёстко проставляем
+//        String id = documentService.uploadDocument(file, metadata);
+//        return ResponseEntity.ok(new UploadDocumentResponse("Uploaded", id));
+//    }
+
     @PostMapping("/template")
     public ResponseEntity<UploadDocumentResponse> uploadTemplateDocumentRaw(
             @RequestHeader("X-File-Name") String name,

@@ -12,16 +12,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Bean
-    SecurityFilterChain filter(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/documents/author/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/documents/**").authenticated()
-                        .anyRequest().permitAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt());
-        return http.build();
-    }
+//    @Bean
+//    SecurityFilterChain filter(HttpSecurity http) throws Exception {
+//        http.csrf(csrf -> csrf.disable())
+//                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/actuator/**").permitAll()
+//                        .requestMatchers("/documents/author/**").authenticated()
+//                        .requestMatchers(HttpMethod.DELETE, "/documents/**").authenticated()
+//                        .requestMatchers(HttpMethod.POST, "/documents").authenticated()
+//                        .anyRequest().permitAll())
+//                .oauth2ResourceServer(oauth2 -> oauth2.jwt());
+//        return http.build();
+//    }
 }
