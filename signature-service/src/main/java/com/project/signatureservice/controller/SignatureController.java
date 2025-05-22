@@ -50,19 +50,15 @@ public class SignatureController {
         return ResponseEntity.ok(signatureService.getSignaturesByDocumentId(documentId));
     }
 
-    @PostMapping
-    public ResponseEntity<Signature> createSignature(@RequestBody Signature signature) {
-        return ResponseEntity.ok(signatureService.saveSignature(signature));
-    }
-
-
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSignature(@PathVariable String id) {
-        signatureService.deleteSignature(id);
-        return ResponseEntity.noContent().build();
-    }
-
-
-
+    //////////////////////////// FOR REMOVAL /////////////////////////////////////////
+//    @PostMapping
+//    public ResponseEntity<Signature> createSignature(@RequestBody Signature signature) {
+//        return ResponseEntity.ok(signatureService.saveSignature(signature));
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> deleteSignature(@PathVariable String id) {
+//        signatureService.deleteSignature(id);
+//        return ResponseEntity.noContent().build();
+//    }
 }
