@@ -18,6 +18,7 @@ public class SecurityConfig {
         http.csrf(cs -> cs.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/profile/by-email").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();

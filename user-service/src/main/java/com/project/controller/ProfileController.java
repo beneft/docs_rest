@@ -15,11 +15,16 @@ import org.springframework.web.bind.annotation.*;
 class ProfileController {
 
     private final UserService userService;
-
-    /* JWT уже прошёл фильтр и валиден; claim sub == Keycloak userId */
     @GetMapping
     public UserDto me(@AuthenticationPrincipal Jwt jwt) {
         return userService.getById(jwt.getSubject());
+    }
+
+    @GetMapping("/by-email")
+    public UserDto byEmail(@RequestParam String email,
+                           @RequestParam boolean exact) {
+        UserDto dto = userService.findByEmail(email, exact);
+        return dto;
     }
 
     @PutMapping

@@ -12,10 +12,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -25,21 +22,22 @@ public class UserService {
     private final KeycloakProperties props;
     private final WebClient web = WebClient.builder().build();
 
-    /* ---------- РЕГИСТРАЦИЯ -------------------------------------------- */
     public void register(RegisterRequest r) {
         UserRepresentation u = new UserRepresentation();
-        u.setEmail(r.email());          // ключевое поле
-        u.setUsername(r.email());       // безопасно заполняем тем же e-mail
+        u.setEmail(r.email());
+        u.setUsername(r.email());
         u.setFirstName(r.firstName());
         u.setLastName(r.lastName());
         u.setEnabled(true);
 
-        // Пользовательские атрибуты
-        Map<String, List<String>> at = new HashMap<>();
-        at.put("organization", List.of(r.organization()));
-        at.put("position",     List.of(r.position()));
-        at.put("phone",        List.of(r.phone()));
-        u.setAttributes(at);
+        if (r.organization() != null && !r.organization().isBlank())
+            u.singleAttribute("organization", r.organization());
+
+        if (r.position() != null && !r.position().isBlank())
+            u.singleAttribute("position", r.position());
+
+        if (r.phone() != null && !r.phone().isBlank())
+            u.singleAttribute("phone", r.phone());
 
         Response resp = keycloak.realm(props.getRealm()).users().create(u);
         if (resp.getStatus() != 201) throw new IllegalStateException("KC create: " + resp);
@@ -52,7 +50,6 @@ public class UserService {
         keycloak.realm(props.getRealm()).users().get(id).resetPassword(pass);
     }
 
-    /* ---------- ЛОГИН (grant_type=password) ----------------------------- */
     public AuthResponse login(LoginRequest r) {
         Map tok = web.post()
                 .uri(props.tokenUrl())                         // helper, см. ниже
@@ -70,8 +67,26 @@ public class UserService {
                 (String) tok.get("token_type"));
     }
 
-    /* ---------- ПОЛУЧИТЬ / ИЗМЕНИТЬ / УДАЛИТЬ --------------------------- */
     public UserDto getById(String id) { return map(kcUser(id)); }
+    public UserDto findByEmail(String email, boolean exact) {
+
+        List<UserRepresentation> brief =
+                keycloak.realm(props.getRealm())
+                        .users()
+                        .searchByEmail(email, exact);
+        if (brief.isEmpty())
+            throw new NoSuchElementException("User not found: " + email);
+        String id = brief.get(0).getId();
+        UserRepresentation full = keycloak.realm(props.getRealm())
+                .users()
+                .get(id)
+                .toRepresentation();
+        UserDto dto = map(full);
+        return new UserDto(dto.id(), dto.email(),
+                dto.firstName(), dto.lastName(),
+                dto.organization(), dto.position(),
+                "");
+    }
 
     public UserDto update(String id, UpdateProfileRequest r) {
         UserRepresentation u = kcUser(id);
@@ -94,7 +109,6 @@ public class UserService {
         keycloak.realm(props.getRealm()).users().get(id).remove();
     }
 
-    /* ---------- Внутренние помощники ------------------------------------ */
     private UserRepresentation kcUser(String id) {
         return keycloak.realm(props.getRealm()).users().get(id).toRepresentation();
     }
