@@ -34,26 +34,16 @@ public class DocumentController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadDocumentResponse> uploadDocument(
+            @AuthenticationPrincipal Jwt jwt,
             @RequestPart("file") MultipartFile file,
             @RequestPart("metadata") String metadataJson) throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        DocumentMetadata metadata = objectMapper.readValue(metadataJson, DocumentMetadata.class);
-
+        DocumentMetadata metadata =
+                new ObjectMapper().readValue(metadataJson, DocumentMetadata.class);
+        metadata.setUploaderId(jwt.getSubject());
         String id = documentService.uploadDocument(file, metadata);
-        return ResponseEntity.ok(new UploadDocumentResponse("Document was uploaded successfully", id));
+        return ResponseEntity.ok(new UploadDocumentResponse("Uploaded", id));
     }
 
-//    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<UploadDocumentResponse> uploadDocument(
-//            @AuthenticationPrincipal Jwt jwt,
-//            @RequestPart("file") MultipartFile file,
-//            @RequestPart("metadata") DocumentMetadata metadata) throws IOException {
-//
-//        metadata.setUploaderId(jwt.getSubject());      // жёстко проставляем
-//        String id = documentService.uploadDocument(file, metadata);
-//        return ResponseEntity.ok(new UploadDocumentResponse("Uploaded", id));
-//    }
 
     @PostMapping("/template")
     public ResponseEntity<UploadDocumentResponse> uploadTemplateDocumentRaw(
