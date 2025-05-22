@@ -3,7 +3,6 @@ package com.project.signatureservice.service;
 import com.example.commondto.*;
 import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.client.NotificationClient;
-import com.project.signatureservice.client.RecievedDocumentsClient;
 import com.project.signatureservice.model.*;
 import com.project.signatureservice.repository.SignatureRepository;
 import com.project.signatureservice.repository.SigningProcessRepository;
@@ -27,8 +26,6 @@ public class ApprovalService {
     private final DocumentFeignClient documentClient;
     @Autowired
     private NotificationClient notificationClient;
-    @Autowired
-    private RecievedDocumentsClient recievedDocumentsClient;
 
     public void startSigningProcess(SigningProcess process) {
         if (process.getApprovalType() == ApprovalType.SEQUENTIAL) {
@@ -37,7 +34,7 @@ public class ApprovalService {
         signingProcessRepository.save(process);
         for (Signer signer: process.getSigners()){
             if (StringUtils.hasText(signer.getUserId())) {
-                recievedDocumentsClient.addDocument(signer.getUserId(), process.getDocumentId());
+                documentClient.addReceivedDocument(signer.getUserId(), process.getDocumentId());
             }
         }
         notificationClient.notifySigners(buildNotificationRequest(process));
