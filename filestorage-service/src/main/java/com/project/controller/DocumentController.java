@@ -21,7 +21,6 @@ import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -80,11 +79,14 @@ public class DocumentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("@sec.isAuthor(#id, #jwt.subject, @documentMetadataRepository)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable String id) {
-        documentService.deleteDocument(id);
+    public ResponseEntity<Void> deleteDocument(@PathVariable String id,
+                                               @AuthenticationPrincipal Jwt jwt) {
+        documentService.deleteDocument(id);            // здесь уже безопасно
         return ResponseEntity.noContent().build();
     }
+
 
     @GetMapping("/{id}/metadata")
     public ResponseEntity<DocumentMetadata> getDocumentMetadata(@PathVariable String id) {
@@ -124,7 +126,7 @@ public class DocumentController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("@sec.isOwner(#jwt, #uploaderId)")
+    @PreAuthorize("@sec.isAuthorByRequest(#jwt, #uploaderId)")
     @GetMapping("/author/{uploaderId}")
     public ResponseEntity<List<DocumentMetadataDTO>> getByUploader(
             @AuthenticationPrincipal Jwt jwt,
