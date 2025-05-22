@@ -3,12 +3,14 @@ package com.project.signatureservice.service;
 import com.example.commondto.*;
 import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.client.NotificationClient;
+import com.project.signatureservice.client.RecievedDocumentsClient;
 import com.project.signatureservice.model.*;
 import com.project.signatureservice.repository.SignatureRepository;
 import com.project.signatureservice.repository.SigningProcessRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -25,12 +27,19 @@ public class ApprovalService {
     private final DocumentFeignClient documentClient;
     @Autowired
     private NotificationClient notificationClient;
+    @Autowired
+    private RecievedDocumentsClient recievedDocumentsClient;
 
     public void startSigningProcess(SigningProcess process) {
         if (process.getApprovalType() == ApprovalType.SEQUENTIAL) {
             process.getSigners().sort(Comparator.comparingInt(Signer::getOrder));
         }
         signingProcessRepository.save(process);
+        for (Signer signer: process.getSigners()){
+            if (StringUtils.hasText(signer.getUserId())) {
+                recievedDocumentsClient.addDocument(signer.getUserId(), process.getDocumentId());
+            }
+        }
         notificationClient.notifySigners(buildNotificationRequest(process));
     }
 
