@@ -12,7 +12,7 @@
 <!--        <keepAliveDuration>5 seconds</keepAliveDuration>-->
 <!--        <reconnectionDelay>10 seconds</reconnectionDelay>-->
 <!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder">-->
-<!--            <customFields>{"app_name":"notification-service"}</customFields>-->
+<!--            <customFields>{"app_name":"template-service"}</customFields>-->
 <!--        </encoder>-->
 <!--        <immediateFlush>true</immediateFlush>-->
 <!--    </appender>-->
