@@ -16,22 +16,45 @@ spring:
         locator:
           enabled: true
       routes:
+        ####################### documents #########################
+        # without circuit breaker because of multipart upload
+        - id: document-upload
+          uri: lb://DOCUMENT-SERVICE
+          predicates:
+            - Path=/documents
+          filters:
+            - StripPrefix=0
+
+        # without circuit breaker
+        - id: document-template-upload
+          uri: lb://DOCUMENT-SERVICE
+          predicates:
+            - Path=/documents/template
+          filters:
+            - StripPrefix=0
+
+        # with circuit breaker
         - id: document-service
           uri: lb://DOCUMENT-SERVICE
           predicates:
-            - Path=/api/files/**
+            - Path=/documents/**
           filters:
             - name: CircuitBreaker
               args:
                 name: filestorageCB
                 fallbackUri: forward:/fallback/filestorage
+            - StripPrefix=0
 
+        ####################### signatures #########################
+        # without circuit breaker
         - id: signature-verify
           uri: lb://SIGNATURE-SERVICE
           predicates:
             - Path=/signatures/verify
           filters:
+            - StripPrefix=0
 
+        # with circuit breaker
         - id: signature-service
           uri: lb://SIGNATURE-SERVICE
           predicates:
@@ -41,27 +64,42 @@ spring:
               args:
                 name: signatureCB
                 fallbackUri: forward:/fallback/signature
+            - StripPrefix=0
 
+        ####################### USERS #########################
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/users/**
+            - Path=/api/auth/**, /api/profile/**
           filters:
             - name: CircuitBreaker
               args:
                 name: userCB
                 fallbackUri: forward:/fallback/user
+            - StripPrefix=0
 
+        ####################### TEMPLATES #########################
+        # without circuit breaker
+        - id: template-upload
+          uri: lb://TEMPLATE-SERVICE
+          predicates:
+            - Path=/templates
+          filters:
+            - StripPrefix=0
+
+        # with circuit breaker
         - id: template-service
           uri: lb://TEMPLATE-SERVICE
           predicates:
-            - Path=/api/templates/**
+            - Path=/templates/**
           filters:
             - name: CircuitBreaker
               args:
                 name: templateCB
                 fallbackUri: forward:/fallback/template
+            - StripPrefix=0
 
+        ####################### NOTIFICATIONS #########################
         - id: notification-service
           uri: lb://NOTIFICATION-SERVICE
           predicates:
@@ -71,7 +109,7 @@ spring:
               args:
                 name: notificationCB
                 fallbackUri: forward:/fallback/notification
-
+            - StripPrefix=0
 
 resilience4j:
   circuitbreaker:
@@ -81,40 +119,21 @@ resilience4j:
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
-
       signatureCB:
         slidingWindowSize: 5
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
-
       userCB:
         slidingWindowSize: 5
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
-
       templateCB:
         slidingWindowSize: 5
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
-
       notificationCB:
         slidingWindowSize: 5
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: resilience4j.circuitbreakers, health
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
+        minimumNumberOfCalls:

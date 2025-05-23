@@ -2,41 +2,39 @@ package com.project.config;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/fallback")
 public class FallbackController {
 
-    @GetMapping("/filestorage")
+    @RequestMapping(value = "/filestorage")
     public ResponseEntity<String> fallbackFile() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("File storage service is unavailable.");
+        return fallback("File storage");
     }
 
-    @GetMapping("/signature")
+    @RequestMapping(value = "/signature")
     public ResponseEntity<String> fallbackSignature() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Signature service is unavailable.");
+        return fallback("Signature");
     }
 
-    @GetMapping("/user")
+    @RequestMapping(value = "/user")
     public ResponseEntity<String> fallbackUser() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("User service is unavailable.");
+        return fallback("User");
     }
 
-    @GetMapping("/template")
+    @RequestMapping(value = "/template")
     public ResponseEntity<String> fallbackTemplate() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Template service is unavailable.");
+        return fallback("Template");
     }
 
-    @GetMapping("/notification")
+    @RequestMapping(value = "/notification")
     public ResponseEntity<String> fallbackNotification() {
+        return fallback("Notification");
+    }
+
+    private ResponseEntity<String> fallback(String serviceName) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Notification service is unavailable.");
+                .body(serviceName + " service is currently unavailable. Please try again later.");
     }
 }
