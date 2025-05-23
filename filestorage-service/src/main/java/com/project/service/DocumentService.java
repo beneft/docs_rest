@@ -109,6 +109,7 @@ public class DocumentService {
         existing.setTags(updatedMetadata.getTags());
         existing.setUploaderId(updatedMetadata.getUploaderId());
         existing.setExpirationDate(updatedMetadata.getExpirationDate());
+        existing.setType(updatedMetadata.getType());
 
         metadataRepository.save(existing);
         return MetadataToDto(existing);
