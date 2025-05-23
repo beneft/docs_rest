@@ -2,6 +2,8 @@ server:
   port: 8083
 
 spring:
+  application:
+    name: SIGNATURE-SERVICE
   security:
     oauth2:
       resourceserver:
@@ -13,6 +15,9 @@ spring:
       auto-index-creation: true
 
 
-document:
-  service:
-    url: http://localhost:8082
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
