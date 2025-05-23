@@ -27,7 +27,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/approval/start").authenticated()
                         .anyRequest().permitAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .headers(headers -> {
+                    headers.frameOptions(frame -> frame.disable());
+                    headers.contentSecurityPolicy(csp -> csp.policyDirectives(
+                            "frame-ancestors 'self' http://localhost:3000"));
+        });
         return http.build();
     }
 
