@@ -138,7 +138,7 @@ public class ApprovalService {
                 .filter(s ->
                         (s.getUserId() != null && s.getUserId().equals(userId)) ||
                                 (s.getUserId() == null && s.getEmail().equalsIgnoreCase(signature.getAuthorName())) ||
-                                (s.getDeputy() != null && !Objects.equals(userId, "-1") && userId.equals(s.getDeputy().getId()))
+                                (s.getDeputy() != null && Objects.equals(userId, "-1") && signature.getAuthorName().equals(s.getDeputy().getEmail()))
                 )
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
