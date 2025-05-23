@@ -3,6 +3,7 @@ package com.project.signatureservice.service;
 import com.example.commondto.*;
 import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.client.NotificationClient;
+import com.project.signatureservice.kafka.KafkaNotificationProducer;
 import com.project.signatureservice.model.*;
 import com.project.signatureservice.repository.SignatureRepository;
 import com.project.signatureservice.repository.SigningProcessRepository;
@@ -24,8 +25,7 @@ public class ApprovalService {
     private final SignatureRepository signatureRepository;
     private final SigningProcessRepository signingProcessRepository;
     private final DocumentFeignClient documentClient;
-    @Autowired
-    private NotificationClient notificationClient;
+    private final KafkaNotificationProducer notificationProducer;
 
     public void startSigningProcess(SigningProcess process) {
         if (process.getApprovalType() == ApprovalType.SEQUENTIAL) {
@@ -38,7 +38,7 @@ public class ApprovalService {
                 documentClient.addReceivedDocument(signer.getUserId(), process.getDocumentId());
             }
         }
-        notificationClient.notifySigners(buildNotificationRequest(process));
+        notificationProducer.sendNotification(buildNotificationRequest(process));
     }
 
     public List<SignerDTO> getSigners(String documentId) {
