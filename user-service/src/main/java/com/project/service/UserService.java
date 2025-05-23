@@ -7,9 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 
 import java.util.*;
@@ -52,13 +54,21 @@ public class UserService {
 
     public AuthResponse login(LoginRequest r) {
         Map tok = web.post()
-                .uri(props.tokenUrl())                         // helper, см. ниже
+                .uri(props.tokenUrl())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData("grant_type", "password")
-                        .with("client_id", props.getClientId())
+                        .with("client_id",     props.getClientId())
                         .with("client_secret", props.getClientSecret())
-                        .with("username", r.email())                // <-- email вместо username
-                        .with("password", r.password()))
-                .retrieve().bodyToMono(Map.class).block();
+                        .with("username",      r.email())
+                        .with("password",      r.password()))
+                .exchangeToMono(resp -> {
+                    if (resp.statusCode().isError())
+                        return resp.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(
+                                        new IllegalStateException("KC /token error: " + body)));
+                    return resp.bodyToMono(Map.class);
+                })
+                .block();
 
         return new AuthResponse(
                 (String) tok.get("access_token"),

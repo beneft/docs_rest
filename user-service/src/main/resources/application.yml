@@ -10,29 +10,19 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080/realms/documentsUsersRealm
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/users_db
-#    username: postgres
-#    password: 222316pb
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
 
-#keycloak:
-#  realm: documentsUsersRealm
-#  auth-server-url: http://localhost:8080/
-#  resource: documents-flow-client
-#  credentials:
-#    secret: rHwwJzOPsmaE4ORWac9lTKAEiH8GiQmA
-#  admin-user: admin
-#  admin-password: admin
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
 
 keycloak:
   server-url: http://localhost:8080
   realm: documentsUsersRealm
   client-id: documents-flow-client
-  client-secret: w00w6OvFwRmLWlLVymAHGnuqBZ2h13Vr
+  client-secret: rHwwJzOPsmaE4ORWac9lTKAEiH8GiQmA
   admin-user: admin
   admin-password: admin
 
@@ -41,10 +31,3 @@ springdoc:
   api-docs:
     enabled: true
     path: /users/v3/api-docs
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true

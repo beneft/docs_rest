@@ -1,9 +1,11 @@
 package com.project.signatureservice.service;
 
 import com.example.commondto.CmsDetailsDTO;
+import com.example.commondto.DocumentBytesResponse;
 import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.SignatureDTO;
 import com.project.signatureservice.client.DocumentFeignClient;
+import com.project.signatureservice.kafka.DocumentBytesKafkaClient;
 import com.project.signatureservice.model.Signature;
 import com.project.signatureservice.repository.SignatureRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +32,8 @@ public class SignatureService {
     private final SignatureRepository signatureRepository;
     @Autowired
     private DocumentFeignClient documentFeignClient;
-
+    @Autowired
+    private DocumentBytesKafkaClient kafkaClient;
 
     public List<Signature> getAllSignatures() {
         return signatureRepository.findAll();
@@ -40,14 +46,17 @@ public class SignatureService {
     public CmsDetailsDTO verifySignatures(MultipartFile uploadedFile, String documentId){
         CmsDetailsDTO cmsDetails = new CmsDetailsDTO();
         try {
-            ResponseEntity<byte[]> response = documentFeignClient.getDocumentBytes(documentId);
-            if (!response.getStatusCode().is2xxSuccessful()) {
+            DocumentBytesResponse response = kafkaClient.requestBytes(documentId)
+                    .get(3, TimeUnit.SECONDS);
+
+            if (response == null || response.getBytes() == null) {
                 cmsDetails.setCmsValid(false);
                 return cmsDetails;
             }
-
-            byte[] originalBytes = response.getBody();
+            byte[] originalBytes = response.getBytes();
             byte[] uploadedBytes = uploadedFile.getBytes();
+
+            cmsDetails.setCmsValid(Arrays.equals(originalBytes, uploadedBytes));
 
             if (!Arrays.equals(originalBytes, uploadedBytes)) {
                 cmsDetails.setCmsValid(false);
@@ -63,10 +72,14 @@ public class SignatureService {
             cmsDetails.setCreatedDate(metadata.getUploadDate());
 
             return cmsDetails;
-        } catch (IOException e) {
+        } catch (TimeoutException | IOException e) {
             cmsDetails.setCmsValid(false);
-            return cmsDetails;
+        } catch (ExecutionException e) {
+            cmsDetails.setCmsValid(false);
+        } catch (InterruptedException e) {
+            cmsDetails.setCmsValid(false);
         }
+        return cmsDetails;
     }
 
     public List<SignatureDTO> getSignaturesByDocumentId(String documentId) {

@@ -1,42 +1,35 @@
-package com.project.notificationservice.controller;
+package com.project.notificationservice.kafka;
 
 import com.example.commondto.NotificationRequest;
 import com.example.commondto.SignerDTO;
 import com.project.notificationservice.service.NotificationService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@RestController
-@RequestMapping("/notify")
-public class NotificationController {
+@Service
+@RequiredArgsConstructor
+public class KafkaNotificationListener {
+    private final NotificationService mailService;
 
-    @Autowired
-    private NotificationService mailService;
-    private static final Logger logger = LoggerFactory.getLogger(NotificationController.class);
-    @PostMapping
-    public ResponseEntity<Void> notifySigners(@RequestBody NotificationRequest req) {
+    @KafkaListener(topics = "notify-signers", groupId = "notification-group")
+    public void listen(NotificationRequest req) {
         for (SignerDTO signer : req.getSigners()) {
             String link = (signer.getUserId() == null)
                     ? generateGuestLink(req.getDocumentId(), signer.getEmail())
                     : "http://localhost:3000/profile";
-
-            logger.info(link);
-
             String body = String.format("Hello %s,\nYou are invited to sign '%s'.\nClick here: %s",
                     signer.getFullName(), req.getDocumentName(), link);
 
+            System.out.println(link);
+
             mailService.sendEmail(signer.getEmail(), "Please sign the document", body);
         }
-        return ResponseEntity.ok().build();
     }
 
     private String generateGuestLink(String docId, String email) {

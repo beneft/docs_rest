@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "document-service", url = "${document.service.url}")
+@FeignClient(name = "document-service")
 public interface DocumentFeignClient {
 
     @GetMapping("/documents/internal/{id}/bytes")
