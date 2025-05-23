@@ -131,11 +131,11 @@ public class TemplateService {
 
             // Create context and put fields from fieldValues map
             IContext context = report.createContext();
-            //fieldValues.forEach(context::put);
+            fieldValues.forEach(context::put);
 
-            pojo pojo = new pojo(fieldValues.get("field_name").toString(), fieldValues.get("field_thing").toString(), fieldValues.get("field_price").toString(), fieldValues.get("field_qty").toString());
-
-            context.put("pojo", pojo);
+//            pojo pojo = new pojo(fieldValues.get("field_name").toString(), fieldValues.get("field_thing").toString(), fieldValues.get("field_price").toString(), fieldValues.get("field_qty").toString());
+//
+//            context.put("pojo", pojo);
 
             report.process(context, out);
 
