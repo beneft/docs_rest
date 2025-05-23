@@ -49,11 +49,13 @@ public class DocumentController {
     public ResponseEntity<UploadDocumentResponse> uploadTemplateDocumentRaw(
             @RequestHeader("X-File-Name") String name,
             @RequestHeader("X-Content-Type") String contentType,
+            @RequestHeader("X-Uploader-Id") String uploaderId,
             @RequestBody byte[] data) throws IOException {
 
         DocumentMetadata metadata = DocumentMetadata.builder()
                 .name(name)
                 .contentType(contentType)
+                .uploaderId(uploaderId)
                 .uploadDate(LocalDateTime.now())
                 .status(DocumentStatus.ACTIVE)
                 .type(DocumentType.DRAFT)
@@ -101,10 +103,11 @@ public class DocumentController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) String fromDate,
-            @RequestParam(required = false) String toDate
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) DocumentType type
     ) {
         return ResponseEntity.ok(documentService.searchDocumentsMetadata(
-                uploaderId, documentId, name, tags, fromDate, toDate));
+                uploaderId, documentId, name, tags, fromDate, toDate, type));
     }
 
     @PutMapping("/{id}/metadata")
@@ -112,6 +115,13 @@ public class DocumentController {
             @PathVariable String id,
             @RequestBody DocumentMetadataDTO updatedMetadata) {
         DocumentMetadataDTO metadata = documentService.updateMetadata(id, updatedMetadata);
+        return ResponseEntity.ok(metadata);
+    }
+
+    @PutMapping("/{id}/makesent")
+    public ResponseEntity<DocumentMetadataDTO> makeSent(
+            @PathVariable String id) {
+        DocumentMetadataDTO metadata = documentService.makeSent(id);
         return ResponseEntity.ok(metadata);
     }
 

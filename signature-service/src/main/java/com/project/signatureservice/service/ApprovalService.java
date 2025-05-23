@@ -32,8 +32,9 @@ public class ApprovalService {
             process.getSigners().sort(Comparator.comparingInt(Signer::getOrder));
         }
         signingProcessRepository.save(process);
+        documentClient.makeSent(process.getDocumentId());
         for (Signer signer: process.getSigners()){
-            if (StringUtils.hasText(signer.getUserId())) {
+            if (StringUtils.hasText(signer.getUserId()) && !process.getInitiator().equals(signer.getUserId())) {
                 documentClient.addReceivedDocument(signer.getUserId(), process.getDocumentId());
             }
         }
@@ -44,11 +45,26 @@ public class ApprovalService {
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Signing process not found"));
         return process.getSigners().stream()
-                .map(s -> new SignerDTO(s.getUserId(), s.getFullName(), s.getEmail(), s.getPosition(), s.getStatus(), s.getOrder() == -1 || s.getOrder() == process.getCurrentSignerIndex()))
+                .map(s -> {
+                    Deputy deputy = s.getDeputy();
+                    DeputyDTO deputyDTO = (deputy != null)
+                            ? new DeputyDTO(deputy.getId(), deputy.getEmail(), deputy.getName())
+                            : null;
+
+                    return new SignerDTO(
+                            s.getUserId(),
+                            s.getFullName(),
+                            s.getEmail(),
+                            s.getPosition(),
+                            deputyDTO,
+                            s.getStatus(),
+                            process.getApprovalType() == ApprovalType.PARALLEL || s.getOrder() == process.getCurrentSignerIndex()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
-    public boolean canSign(String documentId, Long userId) {
+    public boolean canSign(String documentId, String userId) {
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
 
@@ -112,7 +128,7 @@ public class ApprovalService {
 
     public void applySignature(Signature signature) {
         String documentId = signature.getDocumentId();
-        Long userId = Long.parseLong(signature.getAuthorId());
+        String userId = signature.getAuthorId();
 
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("No signing process for document: " + documentId));
@@ -122,12 +138,12 @@ public class ApprovalService {
                 .filter(s ->
                         (s.getUserId() != null && s.getUserId().equals(userId)) ||
                                 (s.getUserId() == null && s.getEmail().equalsIgnoreCase(signature.getAuthorName())) ||
-                                (s.getDeputy() != null && userId != -1 && userId.equals(s.getDeputy().getId()))
+                                (s.getDeputy() != null && !Objects.equals(userId, "-1") && userId.equals(s.getDeputy().getId()))
                 )
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
 
-        if (userId!=-1) {
+        if (!Objects.equals(userId, "-1")) {
             if (!canSign(documentId, userId)) {
                 throw new IllegalStateException("Signing not allowed for this user at this time");
             }
@@ -164,13 +180,28 @@ public class ApprovalService {
 
         DocumentMetadataDTO doc = documentClient.getDocumentMetadata(documentId).getBody();
         List<SignerDTO> signerDTOs = process.getSigners().stream()
-                .map(s -> new SignerDTO(s.getUserId(), s.getFullName(), s.getEmail(), s.getPosition(), s.getStatus(), false))
+                .map(s -> {
+                    Deputy deputy = s.getDeputy();
+                    DeputyDTO deputyDTO = (deputy != null)
+                            ? new DeputyDTO(deputy.getId(), deputy.getEmail(), deputy.getName())
+                            : null;
+
+                    return new SignerDTO(
+                            s.getUserId(),
+                            s.getFullName(),
+                            s.getEmail(),
+                            s.getPosition(),
+                            deputyDTO,
+                            s.getStatus(),
+                            process.getApprovalType()==ApprovalType.PARALLEL || s.getOrder() == process.getCurrentSignerIndex()
+                    );
+                })
                 .collect(Collectors.toList());
         doc.setSigners(signerDTOs);
         return doc;
     }
 
-    public void declineSignature(String documentId, Long userId) {
+    public void declineSignature(String documentId, String userId) {
         SigningProcess process = signingProcessRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Signing process not found"));
 
@@ -195,15 +226,21 @@ public class ApprovalService {
 
     private NotificationRequest buildNotificationRequest(SigningProcess process) {
         List<SignerDTO> signerDTOs = process.getSigners().stream()
-                .filter(s -> !Objects.equals(s.getUserId(), process.getInitiator()))
+                //.filter(s -> !Objects.equals(s.getUserId(), process.getInitiator()))
                 .map(s -> {
                     boolean canSign = process.getApprovalType() == ApprovalType.PARALLEL ||
                             process.getSigners().indexOf(s) == process.getCurrentSignerIndex();
+                    Deputy deputy = s.getDeputy();
+                    DeputyDTO deputyDTO = (deputy != null)
+                            ? new DeputyDTO(deputy.getId(), deputy.getEmail(), deputy.getName())
+                            : null;
+
                     return new SignerDTO(
                             s.getUserId(),
                             s.getFullName(),
                             s.getEmail(),
                             s.getPosition(),
+                            deputyDTO,
                             s.getStatus(),
                             canSign
                     );

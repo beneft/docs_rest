@@ -18,29 +18,12 @@ import java.util.Base64;
 @RestController
 @RequestMapping("/notify")
 public class NotificationController {
-
     @Autowired
-    private NotificationService mailService;
-    private static final Logger logger = LoggerFactory.getLogger(NotificationController.class);
+    private NotificationService notificationService;
+
     @PostMapping
     public ResponseEntity<Void> notifySigners(@RequestBody NotificationRequest req) {
-        for (SignerDTO signer : req.getSigners()) {
-            String link = (signer.getUserId() == null)
-                    ? generateGuestLink(req.getDocumentId(), signer.getEmail())
-                    : "http://localhost:3000/profile";
-
-            logger.info(link);
-
-            String body = String.format("Hello %s,\nYou are invited to sign '%s'.\nClick here: %s",
-                    signer.getFullName(), req.getDocumentName(), link);
-
-            mailService.sendEmail(signer.getEmail(), "Please sign the document", body);
-        }
+        notificationService.notifySigners(req);
         return ResponseEntity.ok().build();
-    }
-
-    private String generateGuestLink(String docId, String email) {
-        String encoded = Base64.getUrlEncoder().encodeToString(email.getBytes(StandardCharsets.UTF_8));
-        return "http://localhost:3000/sign/" + docId + "/" + encoded;
     }
 }

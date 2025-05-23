@@ -20,6 +20,7 @@ public interface DocumentFeignClient {
     ResponseEntity<String> sendFilledDocument(
             @RequestHeader("X-File-Name") String name,
             @RequestHeader("X-Content-Type") String contentType,
+            @RequestHeader("X-Uploader-Id") String uploaderId,
             @RequestBody byte[] data
     );
 }

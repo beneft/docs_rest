@@ -33,7 +33,7 @@ public class ApprovalController {
     @GetMapping("/{documentId}/can-sign/{userId}")
     public ResponseEntity<Boolean> canSign(
             @PathVariable String documentId,
-            @PathVariable Long userId) {
+            @PathVariable String userId) {
         return ResponseEntity.ok(approvalService.canSign(documentId, userId));
     }
 
@@ -49,7 +49,7 @@ public class ApprovalController {
     }
 
     @PostMapping("/{documentId}/decline/{userId}")
-    public ResponseEntity<String> declineSignature(@PathVariable String documentId, @PathVariable Long userId) {
+    public ResponseEntity<String> declineSignature(@PathVariable String documentId, @PathVariable String userId) {
         approvalService.declineSignature(documentId, userId);
         return ResponseEntity.ok("Signature declined.");
     }

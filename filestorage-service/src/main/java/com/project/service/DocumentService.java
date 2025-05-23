@@ -1,6 +1,7 @@
 package com.project.service;
 import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.DocumentStatus;
+import com.example.commondto.DocumentType;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.project.model.DocumentMetadata;
 import com.project.repository.DocumentMetadataRepository;
@@ -71,7 +72,7 @@ public class DocumentService {
     }
 
     public List<DocumentMetadataDTO> searchDocumentsMetadata(String uploaderId, String documentId, String name,
-                                                             List<String> tags, String fromDate, String toDate) {
+                                                             List<String> tags, String fromDate, String toDate, DocumentType type) {
         Query query = new Query();
         Criteria criteria = new Criteria();
 
@@ -79,6 +80,7 @@ public class DocumentService {
         if (documentId != null) criteria.and("_id").is(documentId);
         if (name != null) criteria.and("name").regex(".*" + name + ".*", "i");
         if (tags != null && !tags.isEmpty()) criteria.and("tags").in(tags);
+        if (type != null) criteria.and("type").is(type);
 
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
         if (fromDate != null || toDate != null) {
@@ -107,6 +109,16 @@ public class DocumentService {
         existing.setTags(updatedMetadata.getTags());
         existing.setUploaderId(updatedMetadata.getUploaderId());
         existing.setExpirationDate(updatedMetadata.getExpirationDate());
+
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
+    }
+
+    public DocumentMetadataDTO makeSent(String id) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        existing.setType(DocumentType.SENT);
 
         metadataRepository.save(existing);
         return MetadataToDto(existing);

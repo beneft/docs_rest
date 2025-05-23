@@ -7,6 +7,7 @@ import com.project.templateservice.dto.TemplateDto;
 import com.project.templateservice.feign.DocumentFeignClient;
 import com.project.templateservice.model.Field;
 import com.project.templateservice.model.Template;
+import com.project.templateservice.pojo.pojo;
 import com.project.templateservice.repository.TemplateRepository;
 import fr.opensagres.xdocreport.core.XDocReportException;
 import fr.opensagres.xdocreport.core.document.SyntaxKind;
@@ -17,6 +18,8 @@ import fr.opensagres.xdocreport.template.TemplateEngineKind;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.*;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
@@ -43,6 +46,8 @@ public class TemplateService {
     private final TemplateRepository templateRepository;
     private final GridFsTemplate gridFsTemplate;
     private final GridFsOperations gridFsOps;
+
+    private static final Logger logger = LoggerFactory.getLogger(TemplateService.class);
 
     public Template saveTemplate(TemplateDto dto, MultipartFile file) throws IOException {
         String fileId = null;
@@ -111,7 +116,7 @@ public class TemplateService {
                 .collect(Collectors.toList());
     }
 
-    public void fillTemplate(String id, Map<String, Object> fieldValues) {
+    public void fillTemplate(String id, Map<String, Object> fieldValues, String uploaderId) {
         Template template = templateRepository.findByFileId(id)
                 .orElseThrow(() -> new RuntimeException("Template not found"));
 
@@ -126,13 +131,18 @@ public class TemplateService {
 
             // Create context and put fields from fieldValues map
             IContext context = report.createContext();
-            fieldValues.forEach(context::put);
+            //fieldValues.forEach(context::put);
+
+            pojo pojo = new pojo(fieldValues.get("field_name").toString(), fieldValues.get("field_thing").toString(), fieldValues.get("field_price").toString(), fieldValues.get("field_qty").toString());
+
+            context.put("pojo", pojo);
 
             report.process(context, out);
 
             feignClient.sendFilledDocument(
                     template.getName(),
                     file.getMetadata().getString("_contentType"),
+                    uploaderId,
                     out.toByteArray()
             );
 
