@@ -48,8 +48,8 @@ public class NotificationService {
                 name, documentName, link
         );
 
-        logger.info(link);
-        //sendEmail(to, "Please sign the document", body);
+        logger.info("link was generated: " + link);
+        sendEmail(to, "Please sign the document", body);
     }
 
     private void sendCreationNotification(String to, String name, String documentName, String link) {
