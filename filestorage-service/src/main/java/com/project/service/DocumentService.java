@@ -81,10 +81,28 @@ public class DocumentService {
     }
 
     public String uploadDocumentRaw(byte[] data, DocumentMetadata metadata) {
-        ObjectId fileId = gridFsTemplate.store(new ByteArrayInputStream(data), metadata.getName(), metadata.getContentType());
-        metadata.setId(fileId.toHexString());
+//        ObjectId fileId = gridFsTemplate.store(new ByteArrayInputStream(data), metadata.getName(), metadata.getContentType());
+//        metadata.setId(fileId.toHexString());
+//        metadataRepository.save(metadata);
+//        return fileId.toHexString();
+
+        GridFSBucket bucket = GridFSBuckets.create(mongoTemplate.getDb(), "fs");
+        GridFSUploadOptions options = new GridFSUploadOptions().metadata(new Document("_contentType", metadata.getContentType()));
+        InputStream stream = new ByteArrayInputStream(data);
+        ObjectId id = bucket.uploadFromStream(metadata.getName(), stream, options);
+
+        int workaround = metadata.getName().indexOf("-id");
+
+        mongoTemplate.getDb().getCollection("fs.files").updateOne(new Document("_id",id), new Document("$set", new Document("filename", metadata.getName().substring(0, workaround)+"-id"+id.toHexString()+metadata.getName().substring(metadata.getName().lastIndexOf('.')))));
+
+        metadata.setId(id.toHexString());
+        String oldname = metadata.getName();
+        String correctId = id.toHexString();
+        String newname = oldname.replaceAll("-id[\\da-fA-F]+", "-id"+correctId);
+        metadata.setName(newname);
         metadataRepository.save(metadata);
-        return fileId.toHexString();
+
+        return id.toHexString();
     }
 
     public Optional<GridFsResource> downloadDocument(String id) {

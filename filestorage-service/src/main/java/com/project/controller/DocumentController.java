@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -53,7 +55,7 @@ public class DocumentController {
             @RequestBody byte[] data) throws IOException {
 
         DocumentMetadata metadata = DocumentMetadata.builder()
-                .name(name)
+                .name(name+"-id"+generateNextId().getBody()+".docx")
                 .contentType(contentType)
                 .uploaderId(uploaderId)
                 .uploadDate(LocalDateTime.now())
@@ -67,13 +69,17 @@ public class DocumentController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id) throws IOException {
+    public ResponseEntity<InputStreamResource> downloadDocument(@PathVariable String id, @RequestParam(value = "download", required = false, defaultValue = "false") boolean forceDownload) throws IOException {
         return documentService.downloadDocument(id)
                 .map(resource -> {
                     try {
+                        String filename = resource.getFilename();
+                        String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+                        String dispositionType = forceDownload ? "attachment" : "inline";
                         return ResponseEntity.ok()
                                 .contentType(MediaType.parseMediaType(resource.getContentType()))
-                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                                .header(HttpHeaders.CONTENT_DISPOSITION,
+                                        dispositionType + "; filename*=UTF-8''" + encodedFilename)
                                 .body(new InputStreamResource(resource.getInputStream()));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
