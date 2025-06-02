@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "document-service")
+@FeignClient(name = "document-service", url = "http://localhost:8082")
 public interface DocumentFeignClient {
 
     @GetMapping("/documents/internal/{id}/bytes")
@@ -32,4 +32,5 @@ public interface DocumentFeignClient {
     @DeleteMapping("/users/{userId}/documents/{documentId}")
     void removeReceivedDocument(@PathVariable("userId") String userId,
                                 @PathVariable("documentId") String documentId);
+
 }

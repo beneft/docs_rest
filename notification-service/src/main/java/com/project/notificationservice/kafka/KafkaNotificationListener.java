@@ -19,17 +19,18 @@ public class KafkaNotificationListener {
 
     @KafkaListener(topics = "notify-signers", groupId = "notification-group")
     public void listen(NotificationRequest req) {
-        for (SignerDTO signer : req.getSigners()) {
-            String link = (signer.getUserId() == null)
-                    ? generateGuestLink(req.getDocumentId(), signer.getEmail())
-                    : "http://localhost:3000/profile";
-            String body = String.format("Hello %s,\nYou are invited to sign '%s'.\nClick here: %s",
-                    signer.getFullName(), req.getDocumentName(), link);
-
-            System.out.println(link);
-
-            mailService.sendEmail(signer.getEmail(), "Please sign the document", body);
-        }
+//        for (SignerDTO signer : req.getSigners()) {
+//            String link = (signer.getUserId() == null)
+//                    ? generateGuestLink(req.getDocumentId(), signer.getEmail())
+//                    : "http://localhost:3000/profile";
+//            String body = String.format("Hello %s,\nYou are invited to sign '%s'.\nClick here: %s",
+//                    signer.getFullName(), req.getDocumentName(), link);
+//
+//            System.out.println(link);
+//
+//            mailService.sendEmail(signer.getEmail(), "Please sign the document", body);
+//        }
+        mailService.notifySigners(req);
     }
 
     private String generateGuestLink(String docId, String email) {

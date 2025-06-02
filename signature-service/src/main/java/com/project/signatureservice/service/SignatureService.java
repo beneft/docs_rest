@@ -46,17 +46,14 @@ public class SignatureService {
     public CmsDetailsDTO verifySignatures(MultipartFile uploadedFile, String documentId){
         CmsDetailsDTO cmsDetails = new CmsDetailsDTO();
         try {
-            DocumentBytesResponse response = kafkaClient.requestBytes(documentId)
-                    .get(3, TimeUnit.SECONDS);
-
-            if (response == null || response.getBytes() == null) {
+            ResponseEntity<byte[]> response = documentFeignClient.getDocumentBytes(documentId);
+            if (!response.getStatusCode().is2xxSuccessful()) {
                 cmsDetails.setCmsValid(false);
                 return cmsDetails;
             }
-            byte[] originalBytes = response.getBytes();
-            byte[] uploadedBytes = uploadedFile.getBytes();
 
-            cmsDetails.setCmsValid(Arrays.equals(originalBytes, uploadedBytes));
+            byte[] originalBytes = response.getBody();
+            byte[] uploadedBytes = uploadedFile.getBytes();
 
             if (!Arrays.equals(originalBytes, uploadedBytes)) {
                 cmsDetails.setCmsValid(false);
@@ -72,14 +69,10 @@ public class SignatureService {
             cmsDetails.setCreatedDate(metadata.getUploadDate());
 
             return cmsDetails;
-        } catch (TimeoutException | IOException e) {
+        } catch (IOException e) {
             cmsDetails.setCmsValid(false);
-        } catch (ExecutionException e) {
-            cmsDetails.setCmsValid(false);
-        } catch (InterruptedException e) {
-            cmsDetails.setCmsValid(false);
+            return cmsDetails;
         }
-        return cmsDetails;
     }
 
     public List<SignatureDTO> getSignaturesByDocumentId(String documentId) {

@@ -2,10 +2,14 @@ package com.project.service;
 import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.DocumentStatus;
 import com.example.commondto.DocumentType;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.project.model.DocumentMetadata;
 import com.project.repository.DocumentMetadataRepository;
 import lombok.RequiredArgsConstructor;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -19,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -37,13 +42,42 @@ public class DocumentService {
     private final MongoTemplate mongoTemplate;
 
     public String uploadDocument(MultipartFile file, DocumentMetadata metadata) throws IOException {
-        ObjectId fileId = gridFsTemplate.store(file.getInputStream(), file.getOriginalFilename(), file.getContentType());
-        metadata.setId(fileId.toHexString());
+//        ObjectId fileId = gridFsTemplate.store(file.getInputStream(), file.getOriginalFilename(), file.getContentType());
+//        metadata.setId(fileId.toHexString());
+//        String oldname = metadata.getName();
+//        String correctId = fileId.toHexString();
+//        String newname = oldname.replaceAll("-id[\\da-fA-F]+", "-id"+correctId);
+//        metadata.setName(newname);
+//        metadata.setUploadDate(LocalDateTime.now());
+//        metadata.setContentType(file.getContentType());
+//        metadata.setStatus(DocumentStatus.ACTIVE);
+//        metadataRepository.save(metadata);
+//        return fileId.toHexString();
+        //ObjectId objectId = new ObjectId(metadata.getId());
+
+        GridFSBucket bucket = GridFSBuckets.create(mongoTemplate.getDb(), "fs");
+        GridFSUploadOptions options = new GridFSUploadOptions().metadata(new Document("_contentType", file.getContentType()));
+        ObjectId id = bucket.uploadFromStream(file.getOriginalFilename(),file.getInputStream(), options);
+
+        int workaround = file.getOriginalFilename().indexOf("-id");
+
+        mongoTemplate.getDb().getCollection("fs.files").updateOne(new Document("_id",id), new Document("$set", new Document("filename", file.getOriginalFilename().substring(0, workaround)+"-id"+id.toHexString()+file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.')))));
+
+        metadata.setId(id.toHexString());
+        String oldname = metadata.getName();
+        String correctId = id.toHexString();
+        String newname = oldname.replaceAll("-id[\\da-fA-F]+", "-id"+correctId);
+        metadata.setName(newname);
         metadata.setUploadDate(LocalDateTime.now());
         metadata.setContentType(file.getContentType());
         metadata.setStatus(DocumentStatus.ACTIVE);
         metadataRepository.save(metadata);
-        return fileId.toHexString();
+
+//        try (InputStream stream = file.getInputStream()) {
+//            bucket.uploadFromStream(objectId, file.getOriginalFilename(), stream, options);
+//        }
+
+        return id.toHexString();
     }
 
     public String uploadDocumentRaw(byte[] data, DocumentMetadata metadata) {
