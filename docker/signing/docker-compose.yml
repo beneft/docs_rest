@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  ncanode:
+    image: malikzh/ncanode
+    ports:
+      - "14579:14579"
+    volumes:
+      - ncanode_cache:/app/cache
+    restart: unless-stopped
+    container_name: ncanode
+
+volumes:
+  ncanode_cache:
