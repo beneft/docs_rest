@@ -1,9 +1,6 @@
 package com.project.controller;
 
-import com.example.commondto.DocumentMetadataDTO;
-import com.example.commondto.DocumentStatus;
-import com.example.commondto.DocumentType;
-import com.example.commondto.UploadDocumentResponse;
+import com.example.commondto.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.model.DocumentMetadata;
 import com.project.service.DocumentService;
@@ -121,6 +118,21 @@ public class DocumentController {
             @PathVariable String id,
             @RequestBody DocumentMetadataDTO updatedMetadata) {
         DocumentMetadataDTO metadata = documentService.updateMetadata(id, updatedMetadata);
+        return ResponseEntity.ok(metadata);
+    }
+
+    @GetMapping("/{id}/metadata/signers")
+    public ResponseEntity<List<SignerListDTO>> getMetadataSigners(
+            @PathVariable String id) {
+        List<SignerListDTO> signers = documentService.getMetadataSigners(id);
+        return ResponseEntity.ok(signers);
+    }
+
+    @PutMapping("/{id}/metadata/signers")
+    public ResponseEntity<DocumentMetadataDTO> updateMetadataSigners(
+            @PathVariable String id,
+            @RequestBody List<SignerListDTO> updatedSigners) {
+        DocumentMetadataDTO metadata = documentService.updateMetadataSigners(id, updatedSigners);
         return ResponseEntity.ok(metadata);
     }
 

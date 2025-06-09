@@ -1,7 +1,5 @@
 package com.project.service;
-import com.example.commondto.DocumentMetadataDTO;
-import com.example.commondto.DocumentStatus;
-import com.example.commondto.DocumentType;
+import com.example.commondto.*;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
@@ -162,6 +160,23 @@ public class DocumentService {
         existing.setUploaderId(updatedMetadata.getUploaderId());
         existing.setExpirationDate(updatedMetadata.getExpirationDate());
         existing.setType(updatedMetadata.getType());
+
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
+    }
+
+    public List<SignerListDTO> getMetadataSigners(String id) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        return existing.getSigners();
+    }
+
+    public DocumentMetadataDTO updateMetadataSigners(String id, List<SignerListDTO> updatedSigners) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        existing.setSigners(updatedSigners);
 
         metadataRepository.save(existing);
         return MetadataToDto(existing);
