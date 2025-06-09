@@ -77,6 +77,24 @@ public class UserService {
                 (String) tok.get("token_type"));
     }
 
+    public void changePassword(String email, String oldPassword, String newPassword) {
+        try {
+            login(new LoginRequest(email, oldPassword));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
+
+        List<UserRepresentation> found = keycloak.realm(props.getRealm()).users().searchByEmail(email, true);
+        if (found.isEmpty()) throw new NoSuchElementException("User not found: " + email);
+        String id = found.get(0).getId();
+
+        CredentialRepresentation pass = new CredentialRepresentation();
+        pass.setTemporary(false);
+        pass.setType(CredentialRepresentation.PASSWORD);
+        pass.setValue(newPassword);
+        keycloak.realm(props.getRealm()).users().get(id).resetPassword(pass);
+    }
+
     public UserDto getById(String id) { return map(kcUser(id)); }
     public UserDto findByEmail(String email, boolean exact) {
 
