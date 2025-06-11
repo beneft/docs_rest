@@ -3,6 +3,7 @@ package com.project.signatureservice.controller;
 import com.example.commondto.CmsDetailsDTO;
 import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.SignatureDTO;
+import com.example.commondto.SignatureVerificationResult;
 import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.model.Signature;
 import com.project.signatureservice.service.SignatureService;
@@ -29,6 +30,14 @@ public class SignatureController {
             @RequestParam("file") MultipartFile uploadedFile,
             @RequestParam("id") String documentId) {
         return ResponseEntity.ok(signatureService.verifySignatures(uploadedFile,documentId));
+    }
+
+    @PostMapping("/verify/v2")
+    public ResponseEntity<List<SignatureVerificationResult>> verify(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("id") String documentId
+    ) {
+        return ResponseEntity.ok(signatureService.verifySignaturesV2(file, documentId));
     }
 
     private final SignatureService signatureService;

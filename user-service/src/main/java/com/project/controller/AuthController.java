@@ -2,6 +2,7 @@ package com.project.controller;
 
 import com.project.dto.AuthResponse;
 import com.project.dto.LoginRequest;
+import com.project.dto.PasswordChangeRequest;
 import com.project.dto.RegisterRequest;
 import com.project.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
         return userService.login(request);
+    }
+
+    @PutMapping("/password")
+    public void changePassword(@RequestBody PasswordChangeRequest req) {
+        userService.changePassword(req.email(), req.oldPassword(), req.newPassword());
     }
 }

@@ -1,10 +1,8 @@
 package com.project.signatureservice.service;
 
-import com.example.commondto.CmsDetailsDTO;
-import com.example.commondto.DocumentBytesResponse;
-import com.example.commondto.DocumentMetadataDTO;
-import com.example.commondto.SignatureDTO;
+import com.example.commondto.*;
 import com.project.signatureservice.client.DocumentFeignClient;
+import com.project.signatureservice.client.NcaNodeClient;
 import com.project.signatureservice.kafka.DocumentBytesKafkaClient;
 import com.project.signatureservice.model.Signature;
 import com.project.signatureservice.repository.SignatureRepository;
@@ -18,9 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -34,6 +30,8 @@ public class SignatureService {
     private DocumentFeignClient documentFeignClient;
     @Autowired
     private DocumentBytesKafkaClient kafkaClient;
+    @Autowired
+    private NcaNodeClient ncaNodeClient;
 
     public List<Signature> getAllSignatures() {
         return signatureRepository.findAll();
@@ -73,6 +71,41 @@ public class SignatureService {
             cmsDetails.setCmsValid(false);
             return cmsDetails;
         }
+    }
+
+    public List<SignatureVerificationResult> verifySignaturesV2(MultipartFile uploadedFile, String documentId) {
+        List<Signature> signatures = signatureRepository.findByDocumentId(documentId);
+        byte[] fileBytes;
+
+        try {
+            fileBytes = uploadedFile.getBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file", e);
+        }
+
+        String base64Data = Base64.getEncoder().encodeToString(fileBytes);
+        List<SignatureVerificationResult> results = new ArrayList<>();
+
+        for (Signature sig : signatures) {
+            try {
+                NcaVerifyRequest request = new NcaVerifyRequest(List.of("OCSP"), sig.getCms(), base64Data);
+                NcaVerifyResponse response = ncaNodeClient.verifyCms(request);
+
+                SignatureVerificationResult result = new SignatureVerificationResult();
+                result.setAuthorId(sig.getAuthorId());
+                result.setAuthorName(sig.getAuthorName());
+                result.setVerificationResponse(response);
+
+                results.add(result);
+            } catch (Exception ex) {
+                SignatureVerificationResult failedResult = new SignatureVerificationResult();
+                failedResult.setAuthorId(sig.getAuthorId());
+                failedResult.setAuthorName(sig.getAuthorName());
+                failedResult.setVerificationResponse(null);
+                results.add(failedResult);
+            }
+        }
+        return results;
     }
 
     public List<SignatureDTO> getSignaturesByDocumentId(String documentId) {
