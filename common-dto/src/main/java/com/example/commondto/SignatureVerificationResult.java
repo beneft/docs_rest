@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class SignatureVerificationResult {
     private String authorId;
     private String authorName;
+    private String authorEmail;
     private NcaVerifyResponse verificationResponse;
 }

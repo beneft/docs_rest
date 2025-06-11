@@ -138,8 +138,8 @@ public class ApprovalService {
         Signer signer = process.getSigners().stream()
                 .filter(s ->
                         (s.getUserId() != null && s.getUserId().equals(userId)) ||
-                                (s.getUserId() == null && s.getEmail().equalsIgnoreCase(signature.getAuthorName())) ||
-                                (s.getDeputy() != null && Objects.equals(userId, "-1") && signature.getAuthorName().equals(s.getDeputy().getEmail()))
+                                (s.getUserId() == null && s.getEmail().equalsIgnoreCase(signature.getAuthorEmail())) ||
+                                (s.getDeputy() != null && Objects.equals(userId, "-1") && signature.getAuthorEmail().equals(s.getDeputy().getEmail()))
                 )
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Signer not found"));
@@ -148,7 +148,7 @@ public class ApprovalService {
             if (!canSign(documentId, userId)) {
                 throw new IllegalStateException("Signing not allowed for this user at this time");
             }
-        } else if (!canSignByEmail(documentId, signature.getAuthorName())) {
+        } else if (!canSignByEmail(documentId, signature.getAuthorEmail())) {
             throw new IllegalStateException("Signing not allowed for this user at this time");
         }
 

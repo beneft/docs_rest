@@ -20,6 +20,8 @@ public class Signature {
     private String authorId;
     @NotBlank
     private String authorName;
+    @NotBlank
+    private String authorEmail;
     private String authorOrganization;
     @NotBlank
     private String cms;
