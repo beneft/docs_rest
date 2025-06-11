@@ -2,6 +2,7 @@ package com.project.service;
 
 import com.project.config.KeycloakProperties;
 import com.project.dto.*;
+import com.project.model.TwoFactorAuthToken;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
@@ -24,6 +25,9 @@ public class UserService {
     private final KeycloakProperties props;
     private final EmailVerificationService emailVerificationService;
     private final WebClient web = WebClient.builder().build();
+
+    private final TwoFactorAuthService twoFactorAuthService;
+    private final UserSettingsService userSettingsService;
 
     public void register(RegisterRequest request) {
         UserRepresentation u = new UserRepresentation();
@@ -177,5 +181,90 @@ public class UserService {
                 at.getOrDefault("position",     List.of("")).get(0),
                 at.getOrDefault("phone",        List.of("")).get(0),
                 at.getOrDefault("iin",        List.of("")).get(0));
+    }
+
+
+    // ======== 2FA IMPLEMENTATION ========
+
+    public AuthResponse loginWith2FA(LoginRequest loginRequest) {
+        if (!emailVerificationService.isEmailConfirmed(loginRequest.email())) {
+            throw new IllegalStateException("Email не подтвержден.");
+        }
+        String userEmail = loginRequest.email();
+        validateUserCredentials(userEmail, loginRequest.password());
+
+        String userId = getUserIdByEmail(loginRequest.email());
+
+        if (userSettingsService.is2FAEnabled(userId)) {
+            twoFactorAuthService.generate2FAToken(userId,userEmail, loginRequest.password());
+            return new AuthResponse("2FA включено. Проверьте email для ссылки.",
+                    "", 1,"");
+        } else {
+            Map tok = fetchToken(loginRequest.email(), loginRequest.password());
+            return new AuthResponse(
+                    (String) tok.get("access_token"),
+                    (String) tok.get("refresh_token"),
+                    ((Number) tok.get("expires_in")).longValue(),
+                    (String) tok.get("token_type"));
+        }
+    }
+
+
+    public AuthResponse confirm2FA(String token, String email) {
+        String userId = getUserIdByEmail(email);
+
+        TwoFactorAuthToken tokenEntity = twoFactorAuthService.validateAndGet2FAToken(token, userId);
+        String password = tokenEntity.getPassword();
+
+        Map fetchToken = fetchToken(email, password);
+
+        return new AuthResponse(
+                (String) fetchToken.get("access_token"),
+                (String) fetchToken.get("refresh_token"),
+                ((Number) fetchToken.get("expires_in")).longValue(),
+                (String) fetchToken.get("token_type"));
+    }
+
+    public void enable2FA(String userId) {
+        userSettingsService.set2FA(userId, true);
+    }
+
+    public void disable2FA(String userId) {
+        userSettingsService.set2FA(userId, false);
+    }
+
+    private void validateUserCredentials(String email, String password) {
+        try {
+            login(new LoginRequest(email, password));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Неверные email или пароль.");
+        }
+    }
+
+    private String getUserIdByEmail(String email) {
+        List<UserRepresentation> users = keycloak.realm(props.getRealm())
+                .users().searchByEmail(email, true);
+        if (users.isEmpty()) {
+            throw new NoSuchElementException("Пользователь не найден: " + email);
+        }
+        return users.get(0).getId();
+    }
+
+    private Map fetchToken(String email, String password) {
+        return web.post()
+                .uri(props.tokenUrl())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData("grant_type", "password")
+                        .with("client_id",     props.getClientId())
+                        .with("client_secret", props.getClientSecret())
+                        .with("username",      email)
+                        .with("password",      password))
+                .exchangeToMono(resp -> {
+                    if (resp.statusCode().isError())
+                        return resp.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new IllegalStateException("KC /token error: " + body)));
+                    return resp.bodyToMono(Map.class);
+                })
+                .block();
     }
 }

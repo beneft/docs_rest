@@ -18,4 +18,11 @@ public class EmailKafkaListener {
     public void listenEmailVerification(EmailNotificationRequest request) {
         mailService.sendEmail(request.getTo(), request.getSubject(), request.getBody());
     }
+
+    @KafkaListener(topics = "2fa-notification-topic",
+            groupId = "notification-group",
+            containerFactory = "emailKafkaListenerContainerFactory")
+    public void listen2FANotification(EmailNotificationRequest request) {
+        mailService.sendEmail(request.getTo(), request.getSubject(), request.getBody());
+    }
 }

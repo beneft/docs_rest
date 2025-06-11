@@ -31,4 +31,25 @@ public class AuthController {
     public void changePassword(@RequestBody PasswordChangeRequest req) {
         userService.changePassword(req.email(), req.oldPassword(), req.newPassword());
     }
+
+
+    @PostMapping("/2fa/enable")
+    public void enable2FA(@RequestParam String userId) {
+        userService.enable2FA(userId);
+    }
+
+    @PostMapping("/2fa/disable")
+    public void disable2FA(@RequestParam String userId) {
+        userService.disable2FA(userId);
+    }
+
+    @PostMapping("/login2fa")
+    public AuthResponse login2fa(@RequestBody LoginRequest request) {
+        return userService.loginWith2FA(request);
+    }
+
+    @PostMapping("/2fa/confirm")
+    public AuthResponse confirm(@RequestParam String token, @RequestParam String email) {
+        return userService.confirm2FA(token, email);
+    }
 }

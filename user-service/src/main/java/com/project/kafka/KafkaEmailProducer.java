@@ -14,4 +14,8 @@ public class KafkaEmailProducer {
     public void sendEmail(EmailNotificationRequest request) {
         kafkaTemplate.send("email-verification-topic", request);
     }
+
+    public void send2FAEmail(EmailNotificationRequest request) {
+        kafkaTemplate.send("2fa-notification-topic", request);
+    }
 }
