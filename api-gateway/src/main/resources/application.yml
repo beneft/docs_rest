@@ -7,12 +7,18 @@ spring:
   codec:
     max-in-memory-size: 100MB
   cloud:
+    loadbalancer:
+      eager-load:
+        enabled: true
     gateway:
       httpclient:
         max-initial-line-length: 65536
         max-header-size: 65536
         max-chunk-size: 65536
+        connect-timeout: 3000
+        response-timeout: 5s
       discovery:
+        enabled: true
         locator:
           enabled: true
       routes:
