@@ -15,6 +15,7 @@ public class SignatureDTO {
     private String documentId;
     private String authorId;
     private String authorName;
+    private String authorEmail;
     private String authorOrganization;
     private LocalDateTime signingDate;
     private boolean cmsValid;

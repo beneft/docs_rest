@@ -13,6 +13,7 @@ public class Signer {
     private String email;
     private String fullName;
     private String position;
+    private String iin;
 
     private Deputy deputy;
 

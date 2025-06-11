@@ -13,6 +13,7 @@ public class SignerDTO {
     private String fullName;
     private String email;
     private String position;
+    private String iin;
     private DeputyDTO deputy = null;
 
     private SigningStatus status;

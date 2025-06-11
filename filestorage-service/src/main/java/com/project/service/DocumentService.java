@@ -22,8 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -187,6 +189,46 @@ public class DocumentService {
                 .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
 
         existing.setType(DocumentType.SENT);
+
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
+    }
+
+    public DocumentMetadataDTO setExpirationDate(String id, LocalDateTime expirationDate) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        existing.setExpirationDate(expirationDate);
+
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
+    }
+
+    public DocumentMetadataDTO toggleTag(String id, String tag, Boolean toggle) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        if (existing.getTags() == null) {
+            existing.setTags(new ArrayList<>());
+        }
+        List<String> tags = existing.getTags();
+        if (Boolean.TRUE.equals(toggle)) {
+            if (!tags.contains(tag)) {
+                tags.add(tag);
+            }
+        } else {
+            tags.remove(tag);
+        }
+
+        metadataRepository.save(existing);
+        return MetadataToDto(existing);
+    }
+
+    public DocumentMetadataDTO setTags(String id, List<String> tags) {
+        DocumentMetadata existing = metadataRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Document metadata not found with ID: " + id));
+
+        existing.setTags(tags);
 
         metadataRepository.save(existing);
         return MetadataToDto(existing);

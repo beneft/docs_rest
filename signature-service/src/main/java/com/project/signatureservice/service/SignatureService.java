@@ -94,6 +94,7 @@ public class SignatureService {
                 SignatureVerificationResult result = new SignatureVerificationResult();
                 result.setAuthorId(sig.getAuthorId());
                 result.setAuthorName(sig.getAuthorName());
+                result.setAuthorEmail(sig.getAuthorEmail());
                 result.setVerificationResponse(response);
 
                 results.add(result);
@@ -101,6 +102,7 @@ public class SignatureService {
                 SignatureVerificationResult failedResult = new SignatureVerificationResult();
                 failedResult.setAuthorId(sig.getAuthorId());
                 failedResult.setAuthorName(sig.getAuthorName());
+                failedResult.setAuthorEmail(sig.getAuthorEmail());
                 failedResult.setVerificationResponse(null);
                 results.add(failedResult);
             }
@@ -115,6 +117,7 @@ public class SignatureService {
                         sig.getAuthorId(),
                         sig.getAuthorName(),
                         sig.getAuthorOrganization(),
+                        sig.getAuthorEmail(),
                         sig.getSigningDate(),
                         sig.isCmsValid()
                 ))
