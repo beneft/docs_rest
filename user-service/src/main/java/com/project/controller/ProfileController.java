@@ -24,8 +24,12 @@ class ProfileController {
     @GetMapping("/by-email")
     public UserDto byEmail(@RequestParam String email,
                            @RequestParam boolean exact) {
-        UserDto dto = userService.findByEmail(email, exact);
-        return dto;
+        return userService.findByEmail(email, exact);
+    }
+
+    @GetMapping("/by-iin")
+    public UserDto byIIN(@RequestParam String iin) {
+        return userService.findByIIN(iin);
     }
 
     @PutMapping

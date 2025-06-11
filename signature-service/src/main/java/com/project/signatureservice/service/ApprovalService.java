@@ -56,6 +56,7 @@ public class ApprovalService {
                             s.getFullName(),
                             s.getEmail(),
                             s.getPosition(),
+                            s.getIin(),
                             deputyDTO,
                             s.getStatus(),
                             process.getApprovalType() == ApprovalType.PARALLEL || s.getOrder() == process.getCurrentSignerIndex()
@@ -191,6 +192,7 @@ public class ApprovalService {
                             s.getFullName(),
                             s.getEmail(),
                             s.getPosition(),
+                            s.getIin(),
                             deputyDTO,
                             s.getStatus(),
                             process.getApprovalType()==ApprovalType.PARALLEL || s.getOrder() == process.getCurrentSignerIndex()
@@ -240,6 +242,7 @@ public class ApprovalService {
                             s.getFullName(),
                             s.getEmail(),
                             s.getPosition(),
+                            s.getIin(),
                             deputyDTO,
                             s.getStatus(),
                             canSign

@@ -143,6 +143,27 @@ public class DocumentController {
         return ResponseEntity.ok(metadata);
     }
 
+    @PutMapping("/{id}/metadata/expiration")
+    public ResponseEntity<DocumentMetadataDTO> setExpirationDate(
+            @PathVariable String id, @RequestBody LocalDateTime expirationDate) {
+        DocumentMetadataDTO metadata = documentService.setExpirationDate(id, expirationDate);
+        return ResponseEntity.ok(metadata);
+    }
+
+    @PutMapping("/{id}/metadata/tag")
+    public ResponseEntity<DocumentMetadataDTO> toggleTag(
+            @PathVariable String id, @RequestBody String tag, @RequestBody Boolean toggle) {
+        DocumentMetadataDTO metadata = documentService.toggleTag(id, tag, toggle);
+        return ResponseEntity.ok(metadata);
+    }
+
+    @PutMapping("/{id}/metadata/tags")
+    public ResponseEntity<DocumentMetadataDTO> setTags(
+            @PathVariable String id, @RequestBody List<String> tags) {
+        DocumentMetadataDTO metadata = documentService.setTags(id, tags);
+        return ResponseEntity.ok(metadata);
+    }
+
     @GetMapping("/internal/{id}/bytes")
     public ResponseEntity<byte[]> getBytesInternal(@PathVariable String id) {
         return (ResponseEntity<byte[]>) documentService.downloadDocument(id)

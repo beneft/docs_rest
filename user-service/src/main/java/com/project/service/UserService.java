@@ -41,6 +41,9 @@ public class UserService {
         if (r.phone() != null && !r.phone().isBlank())
             u.singleAttribute("phone", r.phone());
 
+        if (r.iin() != null && !r.iin().isBlank())
+            u.singleAttribute("iin", r.iin());
+
         Response resp = keycloak.realm(props.getRealm()).users().create(u);
         if (resp.getStatus() != 201) throw new IllegalStateException("KC create: " + resp);
 
@@ -97,7 +100,6 @@ public class UserService {
 
     public UserDto getById(String id) { return map(kcUser(id)); }
     public UserDto findByEmail(String email, boolean exact) {
-
         List<UserRepresentation> brief =
                 keycloak.realm(props.getRealm())
                         .users()
@@ -113,7 +115,25 @@ public class UserService {
         return new UserDto(dto.id(), dto.email(),
                 dto.firstName(), dto.lastName(),
                 dto.organization(), dto.position(),
-                "");
+                dto.phone(),dto.iin());
+    }
+    public UserDto findByIIN(String iin) {
+        List<UserRepresentation> brief =
+                keycloak.realm(props.getRealm())
+                        .users()
+                        .searchByAttributes("iin:" + iin);
+        if (brief.isEmpty())
+            throw new NoSuchElementException("User not found: " + iin);
+        String id = brief.get(0).getId();
+        UserRepresentation full = keycloak.realm(props.getRealm())
+                .users()
+                .get(id)
+                .toRepresentation();
+        UserDto dto = map(full);
+        return new UserDto(dto.id(), dto.email(),
+                dto.firstName(), dto.lastName(),
+                dto.organization(), dto.position(),
+                dto.phone(),dto.iin());
     }
 
     public UserDto update(String id, UpdateProfileRequest r) {
@@ -127,6 +147,7 @@ public class UserService {
         if (r.organization() != null) at.put("organization", List.of(r.organization()));
         if (r.position()     != null) at.put("position",     List.of(r.position()));
         if (r.phone()        != null) at.put("phone",        List.of(r.phone()));
+        if (r.iin()        != null) at.put("iin",        List.of(r.iin()));
         u.setAttributes(at);
 
         keycloak.realm(props.getRealm()).users().get(id).update(u);
@@ -147,6 +168,7 @@ public class UserService {
                 u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(),
                 at.getOrDefault("organization", List.of("")).get(0),
                 at.getOrDefault("position",     List.of("")).get(0),
-                at.getOrDefault("phone",        List.of("")).get(0));
+                at.getOrDefault("phone",        List.of("")).get(0),
+                at.getOrDefault("iin",        List.of("")).get(0));
     }
 }
