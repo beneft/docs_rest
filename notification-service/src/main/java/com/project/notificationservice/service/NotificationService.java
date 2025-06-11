@@ -59,7 +59,7 @@ public class NotificationService {
         );
 
         logger.info(link);
-        //sendEmail(to, "Please sign the document", body);
+        sendEmail(to, "Please sign the document", body);
     }
 
     private String generateLink(String documentId, String userId, String email) {

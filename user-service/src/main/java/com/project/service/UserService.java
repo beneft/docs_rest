@@ -22,27 +22,28 @@ public class UserService {
 
     private final Keycloak keycloak;
     private final KeycloakProperties props;
+    private final EmailVerificationService emailVerificationService;
     private final WebClient web = WebClient.builder().build();
 
-    public void register(RegisterRequest r) {
+    public void register(RegisterRequest request) {
         UserRepresentation u = new UserRepresentation();
-        u.setEmail(r.email());
-        u.setUsername(r.email());
-        u.setFirstName(r.firstName());
-        u.setLastName(r.lastName());
+        u.setEmail(request.email());
+        u.setUsername(request.email());
+        u.setFirstName(request.firstName());
+        u.setLastName(request.lastName());
         u.setEnabled(true);
 
-        if (r.organization() != null && !r.organization().isBlank())
-            u.singleAttribute("organization", r.organization());
+        if (request.organization() != null && !request.organization().isBlank())
+            u.singleAttribute("organization", request.organization());
 
-        if (r.position() != null && !r.position().isBlank())
-            u.singleAttribute("position", r.position());
+        if (request.position() != null && !request.position().isBlank())
+            u.singleAttribute("position", request.position());
 
-        if (r.phone() != null && !r.phone().isBlank())
-            u.singleAttribute("phone", r.phone());
+        if (request.phone() != null && !request.phone().isBlank())
+            u.singleAttribute("phone", request.phone());
 
-        if (r.iin() != null && !r.iin().isBlank())
-            u.singleAttribute("iin", r.iin());
+        if (request.iin() != null && !request.iin().isBlank())
+            u.singleAttribute("iin", request.iin());
 
         Response resp = keycloak.realm(props.getRealm()).users().create(u);
         if (resp.getStatus() != 201) throw new IllegalStateException("KC create: " + resp);
@@ -51,19 +52,25 @@ public class UserService {
 
         CredentialRepresentation pass = new CredentialRepresentation();
         pass.setType(CredentialRepresentation.PASSWORD);
-        pass.setValue(r.password());
+        pass.setValue(request.password());
         keycloak.realm(props.getRealm()).users().get(id).resetPassword(pass);
+
+        emailVerificationService.createOrUpdateVerification(request.email());
     }
 
-    public AuthResponse login(LoginRequest r) {
+    public AuthResponse login(LoginRequest loginRequest) {
+        if (!emailVerificationService.isEmailConfirmed(loginRequest.email())) {
+            throw new IllegalStateException("Email не подтвержден.");
+        }
+
         Map tok = web.post()
                 .uri(props.tokenUrl())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData("grant_type", "password")
                         .with("client_id",     props.getClientId())
                         .with("client_secret", props.getClientSecret())
-                        .with("username",      r.email())
-                        .with("password",      r.password()))
+                        .with("username",      loginRequest.email())
+                        .with("password",      loginRequest.password()))
                 .exchangeToMono(resp -> {
                     if (resp.statusCode().isError())
                         return resp.bodyToMono(String.class)
@@ -136,18 +143,18 @@ public class UserService {
                 dto.phone(),dto.iin());
     }
 
-    public UserDto update(String id, UpdateProfileRequest r) {
+    public UserDto update(String id, UpdateProfileRequest request) {
         UserRepresentation u = kcUser(id);
-        if (r.email() != null) { u.setEmail(r.email()); u.setUsername(r.email()); }
-        if (r.firstName() != null) u.setFirstName(r.firstName());
-        if (r.lastName()  != null) u.setLastName(r.lastName());
+        if (request.email() != null) { u.setEmail(request.email()); u.setUsername(request.email()); }
+        if (request.firstName() != null) u.setFirstName(request.firstName());
+        if (request.lastName()  != null) u.setLastName(request.lastName());
 
         Map<String, List<String>> at = u.getAttributes() == null ?
                 new HashMap<>() : u.getAttributes();
-        if (r.organization() != null) at.put("organization", List.of(r.organization()));
-        if (r.position()     != null) at.put("position",     List.of(r.position()));
-        if (r.phone()        != null) at.put("phone",        List.of(r.phone()));
-        if (r.iin()        != null) at.put("iin",        List.of(r.iin()));
+        if (request.organization() != null) at.put("organization", List.of(request.organization()));
+        if (request.position()     != null) at.put("position",     List.of(request.position()));
+        if (request.phone()        != null) at.put("phone",        List.of(request.phone()));
+        if (request.iin()        != null) at.put("iin",        List.of(request.iin()));
         u.setAttributes(at);
 
         keycloak.realm(props.getRealm()).users().get(id).update(u);

@@ -1,6 +1,8 @@
 package com.project.service;
 
+import com.example.commondto.PasswordResetNotificationRequest;
 import com.project.config.KeycloakProperties;
+import com.project.kafka.KafkaPasswordResetProducer;
 import com.project.model.PasswordResetToken;
 import com.project.repo.PasswordResetTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepo;
     private final Keycloak keycloak;
     private final KeycloakProperties props;
+    private final KafkaPasswordResetProducer kafkaPasswordResetProducer;
 
     private static final Logger logger = LoggerFactory.getLogger(PasswordResetService.class);
 
@@ -36,6 +39,14 @@ public class PasswordResetService {
 
         String resetUrl = "http://localhost:3000/reset-password?token=" + token;
         logger.info(resetUrl);
+
+        PasswordResetNotificationRequest request = new PasswordResetNotificationRequest(
+                email,
+                "Password Reset Request",
+                "Click the link to reset your password: " + resetUrl
+        );
+
+        kafkaPasswordResetProducer.sendPasswordResetEmail(request);
     }
 
     public void resetPassword(String token, String newPassword) {
