@@ -74,7 +74,12 @@ public class ApprovalService {
         }
 
         return process.getSigners().stream().anyMatch(s -> {
-            boolean isMain = s.getUserId().equals(userId);
+            boolean isMain = false;
+            if (s.getUserId()!=null) {
+                isMain = s.getUserId().equals(userId);
+            } else {
+                return false;
+            }
             boolean isSubstitute = false;
             if (s.getDeputy()!= null) {
                 isSubstitute =  s.getDeputy().getId().equals(userId);

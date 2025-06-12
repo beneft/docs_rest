@@ -22,12 +22,14 @@ public class TagController {
 
     @PostMapping("/{userId}")
     public ResponseEntity<Void> addTag(@PathVariable String userId, @RequestBody String tag) {
+        tag = tag.replaceAll("^\"|\"$", "");
         tagService.addTag(userId, tag);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> removeTag(@PathVariable String userId, @RequestBody String tag) {
+        tag = tag.replaceAll("^\"|\"$", "");
         tagService.removeTag(userId, tag);
         return ResponseEntity.ok().build();
     }

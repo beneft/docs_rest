@@ -225,6 +225,8 @@ public class UserService {
                 (String) fetchToken.get("token_type"));
     }
 
+    public boolean is2FAenabled(String userId) {return userSettingsService.is2FAEnabled(userId);}
+
     public void enable2FA(String userId) {
         userSettingsService.set2FA(userId, true);
     }

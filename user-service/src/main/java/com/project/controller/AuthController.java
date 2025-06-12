@@ -6,6 +6,7 @@ import com.project.dto.PasswordChangeRequest;
 import com.project.dto.RegisterRequest;
 import com.project.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -32,6 +33,10 @@ public class AuthController {
         userService.changePassword(req.email(), req.oldPassword(), req.newPassword());
     }
 
+    @GetMapping("/2fa")
+    public ResponseEntity<Boolean> is2FAEnabled(@RequestParam String userId) {
+        return ResponseEntity.ok(userService.is2FAenabled(userId));
+    }
 
     @PostMapping("/2fa/enable")
     public void enable2FA(@RequestParam String userId) {

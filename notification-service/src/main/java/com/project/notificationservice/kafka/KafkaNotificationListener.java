@@ -17,8 +17,8 @@ import java.util.Base64;
 public class KafkaNotificationListener {
     private final NotificationService mailService;
 
-    @KafkaListener(topics = "notify-signers", groupId = "notification-group")
-    public void listen(NotificationRequest req) {
+    @KafkaListener(topics = "notify-signers", groupId = "notification-group", containerFactory = "notificationKafkaListenerContainerFactory")
+    public void listenApproval(NotificationRequest req) {
         mailService.notifySigners(req);
     }
 
