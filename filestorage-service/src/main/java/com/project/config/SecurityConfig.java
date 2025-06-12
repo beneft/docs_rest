@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,9 +34,12 @@ public class SecurityConfig {
                         .requestMatchers("/documents/author/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE,"/documents/**").authenticated()
                         .requestMatchers(HttpMethod.POST,"/documents").authenticated()
+                        .requestMatchers(HttpMethod.POST,"/documents/expiration-check").hasRole("admin")
                         .requestMatchers(HttpMethod.GET,"/documents/**").permitAll()
                         .anyRequest().permitAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                )
                 .headers(headers -> {
                     headers.frameOptions(frame -> frame.disable());
                     headers.contentSecurityPolicy(csp -> csp.policyDirectives(
@@ -58,5 +62,11 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cors);
         return source;
+    }
+
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
+        return converter;
     }
 }
