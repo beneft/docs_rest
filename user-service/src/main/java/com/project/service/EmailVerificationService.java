@@ -35,7 +35,7 @@ public class EmailVerificationService {
         verification.setExpiresAt(now.plusMinutes(EXPIRATION_MINUTES));
 
         repo.save(verification);
-        String confirmLink = "http://localhost:8081/api/email/confirm?code=" + code;
+        String confirmLink = "http://localhost:3000/api/email/confirm?code=" + code;
 
         System.out.println("Подтверждение email:" + confirmLink);
 

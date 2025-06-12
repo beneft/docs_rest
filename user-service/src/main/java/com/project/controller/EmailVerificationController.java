@@ -2,7 +2,11 @@ package com.project.controller;
 
 import com.project.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/email")
@@ -12,9 +16,19 @@ public class EmailVerificationController {
     private final EmailVerificationService service;
 
     @GetMapping("/confirm")
-    public String confirm(@RequestParam String code) {
+    public ResponseEntity<Map<String, Object>> confirm(@RequestParam String code) {
         boolean result = service.confirmEmail(code);
-        return result ? "Email успешно подтвержден!" : "Код недействителен или истек!";
+
+        Map<String, Object> response = new HashMap<>();
+        if (result) {
+            response.put("status", "success");
+            response.put("message", "Email успешно подтвержден!");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "failed");
+            response.put("message", "Код недействителен или истек!");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @PostMapping("/resend")
