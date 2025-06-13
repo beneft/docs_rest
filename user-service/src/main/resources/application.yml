@@ -8,7 +8,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/documentsUsersRealm
+          issuer-uri: http://keycloak:8080/realms/documentsUsersRealm
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
@@ -30,7 +30,7 @@ eureka:
     prefer-ip-address: true
 
 keycloak:
-  server-url: http://localhost:8080
+  server-url: http://keycloak:8080
   realm: documentsUsersRealm
   client-id: documents-flow-client
   client-secret: RoAVLKQo1wPdL3FlJZ2mFr4ZBVNK9BDT

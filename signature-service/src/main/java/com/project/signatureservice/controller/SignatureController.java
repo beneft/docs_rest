@@ -1,21 +1,15 @@
 package com.project.signatureservice.controller;
 
 import com.example.commondto.CmsDetailsDTO;
-import com.example.commondto.DocumentMetadataDTO;
 import com.example.commondto.SignatureDTO;
 import com.example.commondto.SignatureVerificationResult;
-import com.project.signatureservice.client.DocumentFeignClient;
 import com.project.signatureservice.model.Signature;
 import com.project.signatureservice.service.SignatureService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
